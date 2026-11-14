@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoaderCircle, PackageOpen, RotateCcw, ShieldAlert, Sparkles, X } from "lucide-react";
-import { PACK_SETS, cardImage, loadSet, setLogo, type SetData } from "./data";
-import { CardFace, ShinyTag } from "./PokeCard";
+import { ENERGY_PACK, PACK_SETS, cardImage, loadSet, type SetData } from "./data";
+import { CardFace, SetLogo, ShinyTag } from "./PokeCard";
 import type { Collection } from "./useCollection";
 
 export default function Binder({ collection }: { collection: Collection }) {
@@ -43,6 +43,7 @@ export default function Binder({ collection }: { collection: Collection }) {
   }, [zoomed]);
 
   const ready = data?.id === setId;
+  const isEnergyPage = setId === ENERGY_PACK;
   const cards = ready ? data.cards : [];
   const ownedCount = cards.filter((c) => collection.cards[c.id]).length;
   const holoCount = cards.filter((c) => collection.cards[c.id]?.shiny).length;
@@ -52,9 +53,12 @@ export default function Binder({ collection }: { collection: Collection }) {
 
   return (
     <section className="flex flex-col gap-6">
-      <div role="radiogroup" aria-label="Binder set" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div role="radiogroup" aria-label="Binder set" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {PACK_SETS.map((s) => {
-          const owned = Object.values(collection.cards).filter((c) => c.setId === s.id).length;
+          // Energies count toward the Energy page whichever pack they came from
+          const owned = Object.values(collection.cards).filter((c) =>
+            s.id === ENERGY_PACK ? c.isEnergy : c.setId === s.id,
+          ).length;
           return (
             <button
               key={s.id}
@@ -67,8 +71,7 @@ export default function Binder({ collection }: { collection: Collection }) {
               }`}
             >
               <span className="grid h-12 place-items-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={setLogo(s.id)} alt="" className="h-12 w-full object-contain" />
+                <SetLogo setId={s.id} className="h-12" />
               </span>
               <span className="mt-1 block font-display text-sm">{s.name}</span>
               <span className="block text-xs font-semibold text-ink/60">{owned} collected</span>
@@ -143,12 +146,12 @@ export default function Binder({ collection }: { collection: Collection }) {
                     </button>
                   ) : (
                     <div
-                      aria-label={`Card #${card.localId}, not found yet`}
+                      aria-label={`${isEnergyPage ? card.name : `Card #${card.localId}`}, not found yet`}
                       className="relative grid aspect-[63/88] place-items-center overflow-hidden rounded-xl border-2 border-ink/40 bg-gradient-to-br from-[#1d1a2b] to-[#3a2f5c]"
                     >
                       <span className="font-display text-4xl text-white/30">?</span>
-                      <span className="absolute bottom-1.5 text-[10px] font-bold text-white/40">
-                        #{card.localId}
+                      <span className="absolute inset-x-1 bottom-1.5 truncate text-center text-[10px] font-bold text-white/40">
+                        {isEnergyPage ? card.name.replace(/^Basic /, "").replace(/ Energy$/, "") : `#${card.localId}`}
                       </span>
                     </div>
                   )}

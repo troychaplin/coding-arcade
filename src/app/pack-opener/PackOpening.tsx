@@ -12,10 +12,9 @@ import {
   isShiny,
   loadCard,
   loadSet,
-  setLogo,
   type CardDetail,
 } from "./data";
-import { CardFace, FlipCard, ShinyTag, prefersReducedMotion } from "./PokeCard";
+import { CardFace, FlipCard, SetLogo, ShinyTag, prefersReducedMotion } from "./PokeCard";
 import { freePacksNow } from "./PokeCollector";
 import type { Collection, PullResult } from "./useCollection";
 
@@ -196,7 +195,7 @@ export default function PackOpening({
     <section className="flex flex-col gap-6">
       <div>
         <h2 className="mb-3 font-display text-2xl">Choose a booster pack</h2>
-        <div role="radiogroup" aria-label="Booster pack" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div role="radiogroup" aria-label="Booster pack" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {PACK_SETS.map((s) => (
             <button
               key={s.id}
@@ -210,8 +209,7 @@ export default function PackOpening({
               }`}
             >
               <span className="grid h-16 place-items-center rounded-xl bg-white/90 p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={setLogo(s.id)} alt="" className="h-12 w-full object-contain" />
+                <SetLogo setId={s.id} className="h-12" />
               </span>
               <span className="mt-1 block font-display text-sm text-white [text-shadow:1px_1px_0_var(--color-ink)]">
                 {s.name}
@@ -320,8 +318,7 @@ function PackArt({
           }}
         />
         <span className="relative grid h-24 w-full place-items-center rounded-2xl border-[3px] border-ink bg-white p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={setLogo(set.id)} alt={`${set.name} logo`} className="h-[4.5rem] w-full object-contain" />
+          <SetLogo setId={set.id} alt={`${set.name} logo`} className="h-[4.5rem]" large />
         </span>
         <div className="relative text-center text-white [text-shadow:2px_2px_0_var(--color-ink)]">
           <p className="font-display text-2xl leading-tight">{set.name}</p>

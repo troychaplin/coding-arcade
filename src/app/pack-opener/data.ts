@@ -11,14 +11,21 @@ export type PackSet = {
   wrapper: string;
 };
 
+/** Id of our special all-energy pack */
+export const ENERGY_PACK = "energy";
+
 export const PACK_SETS: PackSet[] = [
   { id: "base1", name: "Base Set", year: "1999", wrapper: "from-sky to-grape" },
   { id: "sv03.5", name: "151", year: "2023", wrapper: "from-tomato to-tangerine" },
   { id: "swsh1", name: "Sword & Shield", year: "2020", wrapper: "from-sky to-lime" },
   { id: "sv01", name: "Scarlet & Violet", year: "2023", wrapper: "from-bubble to-grape" },
+  // Not a real set: every energy card (with artwork) from every era
+  { id: ENERGY_PACK, name: "Energy Surge", year: "All eras", wrapper: "from-sun to-tangerine" },
 ];
 
-export const setLogo = (setId: string) => {
+/** Logo image for a set, or null for the Energy pack (it gets an emblem instead). */
+export const setLogo = (setId: string): string | null => {
+  if (setId === ENERGY_PACK) return null;
   // Logos live at assets.tcgdex.net/en/<serie>/<set>/logo.webp
   // (webp: Scarlet & Violet has no .png logo)
   const serie = setId.startsWith("base") ? "base" : setId.startsWith("swsh") ? "swsh" : "sv";
@@ -35,6 +42,8 @@ export type CardDetail = CardBrief & {
   types: string[];
   stage: string | null;
   holoOnly: boolean;
+  /** "Pokemon", "Trainer" or "Energy" */
+  category: string;
 };
 
 /** A set sorted into pack slots by rarity. */
@@ -47,7 +56,16 @@ export type SetData = {
   rare: string[];
   /** Everything rarer than "Rare": holo, ex/V, illustration, secret… */
   special: string[];
+  /** A normal set, or our all-energy pack */
+  kind: "set" | "energy";
 };
+
+const ENERGY_TYPES = ["Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Darkness", "Metal", "Fairy"];
+
+/** "Fire Energy" or "Basic Fire Energy" — the plain kind, not special energy. */
+export function isBasicEnergy(name: string): boolean {
+  return new RegExp(`^(Basic )?(${ENERGY_TYPES.join("|")}) Energy$`).test(name);
+}
 
 const PLAIN_RARITIES = ["Common", "Uncommon", "Rare"];
 
@@ -68,7 +86,7 @@ export function loadSet(setId: string): Promise<SetData> {
   const cached = setCache.get(setId);
   if (cached) return cached;
 
-  const promise = (async () => {
+  const promise = setId === ENERGY_PACK ? loadEnergy() : (async () => {
     const byRarity = (r: string) =>
       getJson<CardBrief[]>(`${API}/cards?set.id=eq:${setId}&rarity=eq:${encodeURIComponent(r)}`);
     const [set, common, uncommon, rare] = await Promise.all([
@@ -90,12 +108,38 @@ export function loadSet(setId: string): Promise<SetData> {
       uncommon: ids(uncommon),
       rare: ids(rare),
       special: cards.map((c) => c.id).filter((id) => !plain.has(id)),
+      kind: "set" as const,
     };
   })();
 
   setCache.set(setId, promise);
   promise.catch(() => setCache.delete(setId)); // allow a retry after an error
   return promise;
+}
+
+/**
+ * The Energy pack: every energy card with artwork, from every set. Basic
+ * energies are grouped by type, then special energies A–Z.
+ */
+async function loadEnergy(): Promise<SetData> {
+  const all = (await getJson<CardBrief[]>(`${API}/cards?category=eq:Energy`)).filter((c) => c.image);
+  const typeOrder = (name: string) => ENERGY_TYPES.findIndex((t) => name.includes(t));
+  const basic = all
+    .filter((c) => isBasicEnergy(c.name))
+    .sort((a, b) => typeOrder(a.name) - typeOrder(b.name) || a.id.localeCompare(b.id));
+  const special = all
+    .filter((c) => !isBasicEnergy(c.name))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  return {
+    id: ENERGY_PACK,
+    name: "Energy Surge",
+    cards: [...basic, ...special],
+    common: basic.map((c) => c.id),
+    uncommon: [],
+    rare: special.map((c) => c.id),
+    special: [],
+    kind: "energy",
+  };
 }
 
 function cardNumber(c: CardBrief) {
@@ -117,6 +161,7 @@ export function loadCard(id: string): Promise<CardDetail> {
     rarity?: string;
     types?: string[];
     stage?: string;
+    category?: string;
     variants?: { holo?: boolean; normal?: boolean; reverse?: boolean };
   }>(`${API}/cards/${id}`).then((c) => ({
     id: c.id,
@@ -127,6 +172,7 @@ export function loadCard(id: string): Promise<CardDetail> {
     rarity: c.rarity ?? "Common",
     types: c.types ?? [],
     stage: c.stage ?? null,
+    category: c.category ?? "Pokemon",
     // Old holo rares (Base Set Charizard) are labelled "Rare" but only come in holo.
     holoOnly: Boolean(c.variants?.holo && !c.variants?.normal && !c.variants?.reverse),
   }));
@@ -137,9 +183,13 @@ export function loadCard(id: string): Promise<CardDetail> {
 
 /**
  * Does this card get the holographic foil? Anything rarer than plain Rare,
- * holo-only rares, and big Pokémon with more than 120 HP.
+ * holo-only rares, big Pokémon with more than 120 HP, and special energies.
  */
-export function isShiny(card: Pick<CardDetail, "rarity" | "holoOnly" | "hp">): boolean {
+export function isShiny(
+  card: Pick<CardDetail, "rarity" | "holoOnly" | "hp" | "name" | "category">,
+): boolean {
+  // Energies: special energy shines, basic energy doesn't (whatever the rarity says)
+  if (card.category === "Energy") return !isBasicEnergy(card.name);
   return !PLAIN_RARITIES.includes(card.rarity) || card.holoOnly || (card.hp ?? 0) > 120;
 }
 
@@ -168,6 +218,18 @@ export function buildPack(set: SetData): string[] {
     if (id) used.add(id);
     return id;
   };
+  // Energy pack: 3 basic energies, 1 special energy, and a 50/50 last slot.
+  if (set.kind === "energy") {
+    const pack = [
+      take(set.common),
+      take(set.common),
+      take(set.common),
+      take(set.rare),
+      take(Math.random() < 0.5 ? set.rare : set.common),
+    ];
+    return pack.map((id) => id ?? take(set.cards.map((c) => c.id))!).filter(Boolean);
+  }
+
   const rareSlot = () =>
     take(set.special.length && Math.random() < 0.3 ? set.special : set.rare.length ? set.rare : set.special);
 

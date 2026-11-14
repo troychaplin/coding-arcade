@@ -21,6 +21,8 @@ export type OwnedCard = {
   setId: string;
   rarity: string;
   shiny: boolean;
+  /** Energy cards also count toward the Energy binder page */
+  isEnergy?: boolean;
 };
 
 export type Collection = {
@@ -164,6 +166,7 @@ export function useCollection() {
         setId,
         rarity: card.rarity,
         shiny: isShiny(card),
+        isEnergy: card.category === "Energy",
       };
       return { id: card.id, isNew: true, coins: 0 };
     });

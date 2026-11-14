@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Gamepad2, Sparkles } from "lucide-react";
+import { setLogo } from "./data";
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -183,6 +184,46 @@ export function ShinyTag() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full border-2 border-ink bg-sun px-2 py-0.5 text-[11px] font-bold">
       <Sparkles className="size-3" strokeWidth={3} /> Holo
+    </span>
+  );
+}
+
+/** A set's logo — or, for the Energy pack, a row of energy symbols. */
+export function SetLogo({
+  setId,
+  alt = "",
+  className = "",
+  large = false,
+}: {
+  setId: string;
+  alt?: string;
+  className?: string;
+  /** Bigger energy emblem for the big pack artwork */
+  large?: boolean;
+}) {
+  const src = setLogo(setId);
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} className={`w-full object-contain ${className}`} />;
+  }
+  return (
+    <span
+      role={alt ? "img" : undefined}
+      aria-label={alt || undefined}
+      className={`flex w-full flex-col items-center justify-center leading-none ${className}`}
+    >
+      <span className={`leading-none ${large ? "text-2xl" : "text-sm"}`} aria-hidden>
+        🔥💧🌿⚡
+      </span>
+      <span
+        className={`font-display leading-none tracking-widest text-tangerine ${large ? "my-1 text-base" : "my-0.5 text-[10px]"}`}
+        aria-hidden
+      >
+        ENERGY
+      </span>
+      <span className={`leading-none ${large ? "text-2xl" : "text-sm"}`} aria-hidden>
+        🔮👊🌙⚙️
+      </span>
     </span>
   );
 }
