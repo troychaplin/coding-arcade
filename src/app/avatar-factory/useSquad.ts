@@ -57,5 +57,7 @@ export function useSquad() {
     [squad],
   );
 
-  return { squad, add, remove };
+  const clear = useCallback(() => write([]), []);
+
+  return { squad, add, remove, clear };
 }

@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Save, Shuffle, Sparkles, Trash2, Users } from "lucide-react";
+import {
+  Check,
+  RotateCcw,
+  Save,
+  Shuffle,
+  Sparkles,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import IdCard from "./IdCard";
 import { useSquad } from "./useSquad";
 import {
@@ -20,7 +29,15 @@ export default function AvatarFactory() {
   const [popKey, setPopKey] = useState(0);
   const [savedSignature, setSavedSignature] = useState<string | null>(null);
 
-  const { squad, add, remove } = useSquad();
+  const [confirmingClear, setConfirmingClear] = useState(false);
+
+  const { squad, add, remove, clear } = useSquad();
+
+  function clearSquad() {
+    clear();
+    setConfirmingClear(false);
+    setSavedSignature(null); // let the current card be saved again
+  }
 
   const stats = statsFor(name, style);
   const signature = JSON.stringify([name.trim(), style]);
@@ -196,6 +213,40 @@ export default function AvatarFactory() {
               </span>
             ) : null;
           })}
+
+          {squad.length > 0 && (
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {confirmingClear ? (
+                <>
+                  <span className="font-bold">
+                    Clear all {squad.length} card{squad.length === 1 ? "" : "s"}?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSquad}
+                    className="chunky-sm pop-sm flex cursor-pointer items-center gap-1 rounded-full bg-tomato px-4 py-1.5 font-bold text-white"
+                  >
+                    <Trash2 className="size-4" strokeWidth={2.5} /> Yes, clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingClear(false)}
+                    className="chunky-sm pop-sm flex cursor-pointer items-center gap-1 rounded-full bg-white px-4 py-1.5 font-bold"
+                  >
+                    <X className="size-4" strokeWidth={2.5} /> Keep them
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingClear(true)}
+                  className="chunky-sm pop-sm flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-1.5 font-bold"
+                >
+                  <RotateCcw className="size-4" strokeWidth={2.5} /> Clear Squad
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {squad.length === 0 ? (
