@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Factory, Rocket, Sparkles } from "lucide-react";
+import { Factory, Rocket, VenetianMask } from "lucide-react";
 
 export type Project = {
   title: string;
@@ -22,10 +22,12 @@ export const projects: Project[] = [
     href: "/avatar-factory",
   },
   {
-    title: "Mystery Project #2",
-    blurb: "Something awesome is being built in the secret lab…",
-    icon: Sparkles,
-    color: "bg-sky",
+    title: "Secret Identity Detective",
+    blurb:
+      "A mystery hero from Marvel, DC, Star Wars and more is hiding behind a blurry photo. Unlock clues and crack the case!",
+    icon: VenetianMask,
+    color: "bg-sun",
+    href: "/secret-identity",
   },
   {
     title: "Mystery Project #3",
