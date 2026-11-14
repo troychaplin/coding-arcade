@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  Dices,
   Flame,
   HeartCrack,
   House,
@@ -29,6 +30,10 @@ type Props = Stats & {
   /** Smaller layout for the squad grid */
   compact?: boolean;
   serial?: string;
+  /** Alternate avatar look (0 = default for the name) */
+  avatarVariant?: number;
+  /** When given, shows a "New look" button on the avatar (live preview only) */
+  onNewLook?: () => void;
 };
 
 function powerColor(power: number) {
@@ -47,6 +52,8 @@ export default function IdCard({
   rarity,
   compact = false,
   serial,
+  avatarVariant = 0,
+  onNewLook,
 }: Props) {
   const [flipped, setFlipped] = useState(false);
   /** True while the card is turned edge-on (halfway through a flip) */
@@ -104,7 +111,7 @@ export default function IdCard({
 
           {/* Avatar */}
           <div
-            className={`${theme.color} relative grid place-items-center border-b-[3px] border-ink ${
+            className={`${theme.color} relative flex flex-col items-center gap-3 border-b-[3px] border-ink ${
               compact ? "py-4" : "py-6"
             }`}
           >
@@ -116,9 +123,10 @@ export default function IdCard({
               {/* Plain <img> so DiceBear SVGs load without next/image domain config */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={avatarUrl(style, displayName)}
+                key={avatarVariant}
+                src={avatarUrl(style, displayName, avatarVariant)}
                 alt={`${displayName} avatar`}
-                className="size-full"
+                className="size-full animate-card-in"
                 width={160}
                 height={160}
               />
@@ -126,6 +134,16 @@ export default function IdCard({
             <span className="chunky-sm absolute right-3 top-3 flex items-center gap-1 rounded-full bg-sun px-2 py-0.5 text-xs font-bold">
               <Star className="size-3.5 fill-ink" /> {power}
             </span>
+            {onNewLook && (
+              <button
+                type="button"
+                onClick={onNewLook}
+                title="Get a new avatar look (stats stay the same)"
+                className="chunky-sm pop-sm flex cursor-pointer items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold"
+              >
+                <Dices className="size-4" strokeWidth={2.5} /> New look
+              </button>
+            )}
           </div>
 
           {/* Details */}

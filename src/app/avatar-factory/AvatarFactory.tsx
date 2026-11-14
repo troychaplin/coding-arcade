@@ -25,6 +25,8 @@ import {
 export default function AvatarFactory() {
   const [name, setName] = useState("Captain Pickletoes");
   const [style, setStyle] = useState<AvatarStyle>("pixel-art");
+  /** Alternate avatar look; resets when the name changes */
+  const [avatarVariant, setAvatarVariant] = useState(0);
   /** Bumped on big changes (style / random name) to replay the pop-in animation */
   const [popKey, setPopKey] = useState(0);
   const [savedSignature, setSavedSignature] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export default function AvatarFactory() {
   }
 
   const stats = statsFor(name, style);
-  const signature = JSON.stringify([name.trim(), style]);
+  const signature = JSON.stringify([name.trim(), style, avatarVariant]);
   const justSaved = savedSignature === signature;
 
   function chooseStyle(next: AvatarStyle) {
@@ -51,6 +53,7 @@ export default function AvatarFactory() {
 
   function randomize() {
     setName(randomName());
+    setAvatarVariant(0);
     setPopKey((n) => n + 1);
   }
 
@@ -60,6 +63,7 @@ export default function AvatarFactory() {
       name: name.trim() || "Mystery Hero",
       style,
       ...stats,
+      avatarVariant,
       createdAt: Date.now(),
     });
     setSavedSignature(signature);
@@ -89,7 +93,10 @@ export default function AvatarFactory() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setAvatarVariant(0);
+                }}
                 maxLength={40}
                 placeholder="Type a name…"
                 aria-label="Character name"
@@ -188,7 +195,13 @@ export default function AvatarFactory() {
             Live preview
           </p>
           <div key={popKey} className="flex w-full justify-center animate-card-in">
-            <IdCard name={name} style={style} {...stats} />
+            <IdCard
+              name={name}
+              style={style}
+              {...stats}
+              avatarVariant={avatarVariant}
+              onNewLook={() => setAvatarVariant((v) => v + 1)}
+            />
           </div>
         </div>
       </section>

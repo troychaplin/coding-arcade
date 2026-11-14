@@ -84,6 +84,8 @@ export type IdCardData = Stats & {
   id: string;
   name: string;
   style: AvatarStyle;
+  /** Which alternate avatar look was picked (0 = the name's default look) */
+  avatarVariant?: number;
   createdAt: number;
 };
 
@@ -302,8 +304,13 @@ export function extrasFor(name: string, style: AvatarStyle): Extras {
   };
 }
 
-export function avatarUrl(style: AvatarStyle, name: string): string {
-  const seed = encodeURIComponent(name.trim() || "Mystery Hero");
+/**
+ * The avatar is drawn from the name. A variant adds a hidden suffix to the
+ * seed, giving a new look without touching the stats (which use the name only).
+ */
+export function avatarUrl(style: AvatarStyle, name: string, variant = 0): string {
+  const base = name.trim() || "Mystery Hero";
+  const seed = encodeURIComponent(variant ? `${base}#${variant}` : base);
   return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}`;
 }
 
