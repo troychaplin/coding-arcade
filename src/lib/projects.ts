@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Factory, Rocket, VenetianMask } from "lucide-react";
+import { Factory, PackageOpen, VenetianMask } from "lucide-react";
 
 export type Project = {
   title: string;
@@ -30,9 +30,11 @@ export const projects: Project[] = [
     href: "/secret-identity",
   },
   {
-    title: "Mystery Project #3",
-    blurb: "What should we build next? Dream it up!",
-    icon: Rocket,
-    color: "bg-tangerine",
+    title: "Ultimate Pokémon Pack Opener",
+    blurb:
+      "Rip open booster packs, flip your cards, hunt for shiny holos and fill your Master Binder!",
+    icon: PackageOpen,
+    color: "bg-tomato",
+    href: "/pack-opener",
   },
 ];

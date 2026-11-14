@@ -27,9 +27,11 @@ export default function Home() {
             <span className="chunky-sm rounded-lg bg-lime px-3 py-1">
               {liveCount} playable
             </span>
-            <span className="chunky-sm rounded-lg bg-sun px-3 py-1">
-              {projects.length - liveCount} coming soon
-            </span>
+            {projects.length > liveCount && (
+              <span className="chunky-sm rounded-lg bg-sun px-3 py-1">
+                {projects.length - liveCount} coming soon
+              </span>
+            )}
           </div>
         </div>
       </section>
