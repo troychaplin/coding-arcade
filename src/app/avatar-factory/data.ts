@@ -211,6 +211,97 @@ export function statsFor(name: string, style: AvatarStyle): Stats {
   };
 }
 
+// ---------- Funny extras ----------
+
+export type Extras = {
+  weakness: string;
+  snack: string;
+  homeBase: string;
+  size: string;
+  catchphrase: string;
+};
+
+export const WEAKNESSES = [
+  "Broccoli",
+  "Bedtime",
+  "Wet socks",
+  "Tickles",
+  "Slow Wi-Fi",
+  "Hiccups",
+  "Stepping on Lego",
+  "Brain freeze",
+  "Being told to tidy up",
+  "Itchy sweaters",
+  "Sneezing kittens",
+  "Running out of snacks",
+];
+
+export const SNACKS = [
+  "Pickle smoothie",
+  "Spicy cereal",
+  "Ketchup ice cream",
+  "Glow-in-the-dark nachos",
+  "Marshmallow tacos",
+  "Chocolate-covered broccoli",
+  "Peanut butter pizza",
+  "Rainbow pancakes",
+  "Moon cheese",
+  "Exploding popcorn",
+  "Gummy worm spaghetti",
+  "Bubble gum soup",
+];
+
+export const HOME_BASES = [
+  "Volcano Burrito Planet",
+  "Under the couch",
+  "A haunted treehouse",
+  "The Moon's basement",
+  "Inside a giant sock",
+  "Castle Wobblestone",
+  "The Lost Sock Dimension",
+  "A secret lair behind the fridge",
+  "Pickle Island",
+  "A bouncy castle in space",
+  "The school lost-and-found",
+  "Grandma's attic",
+];
+
+const HEIGHT_UNITS = ["bananas", "pencils", "pancakes", "garden gnomes", "hot dogs", "toasters"];
+const WEIGHT_UNITS = ["hamsters", "watermelons", "rubber ducks", "pizzas", "bowling balls", "jellybeans"];
+
+export const CATCHPHRASES = [
+  "Fear my socks!",
+  "Snack time is hero time!",
+  "Bonk first, ask later!",
+  "Did someone say tacos?",
+  "Not today, broccoli!",
+  "To the couch fort!",
+  "Behold my awesomeness!",
+  "Oops… I meant to do that!",
+  "Wiggle wiggle, BOOM!",
+  "Nap now, save the world later!",
+  "You can't spell chaos without me!",
+  "Feel the power of pickles!",
+];
+
+/**
+ * Fun facts for the card. Uses its own seed so it never changes the main
+ * stats, and works for cards saved before extras existed.
+ */
+export function extrasFor(name: string, style: AvatarStyle): Extras {
+  const rand = seededRandom(hash(`extras|${name.trim().toLowerCase()}|${style}`));
+  const from = <T,>(list: readonly T[]) => list[Math.floor(rand() * list.length)];
+  const between = (min: number, max: number) => min + Math.floor(rand() * (max - min + 1));
+
+  return {
+    weakness: from(WEAKNESSES),
+    snack: from(SNACKS),
+    homeBase: from(HOME_BASES),
+    size: `${between(2, 40)} ${from(HEIGHT_UNITS)} tall · ${between(3, 999)} ${from(WEIGHT_UNITS)} heavy`,
+    catchphrase: from(CATCHPHRASES),
+  };
+}
+
 export function avatarUrl(style: AvatarStyle, name: string): string {
   const seed = encodeURIComponent(name.trim() || "Mystery Hero");
   return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}`;
