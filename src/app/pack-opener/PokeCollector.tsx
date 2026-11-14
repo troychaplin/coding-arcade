@@ -27,6 +27,22 @@ export function freePacksNow(c: Collection, now: number) {
   return now ? freePacksAt(c, now) : { available: c.freePacks, nextAt: null };
 }
 
+/** The big page title changes with the section you're in */
+const HEADINGS = {
+  packs: {
+    top: "Ultimate Pokémon",
+    main: "Pack Opener",
+    sub: "Rip packs · Flip cards · Find holos",
+    color: "bg-tomato",
+  },
+  binder: {
+    top: "My Pokémon",
+    main: "Master Binder",
+    sub: "Every card you've pulled, set by set",
+    color: "bg-grape",
+  },
+} as const;
+
 const halftone = (color: string) => ({
   backgroundImage: `radial-gradient(${color} 1.4px, transparent 1.6px)`,
   backgroundSize: "12px 12px",
@@ -35,22 +51,25 @@ const halftone = (color: string) => ({
 export default function PokeCollector({ tab }: { tab: "packs" | "binder" }) {
   const { collection, payForPack, addPack } = useCollection();
   const now = useNow();
+  const heading = HEADINGS[tab];
 
   return (
     <div className="flex flex-col gap-8">
       <header
-        className="chunky relative overflow-hidden rounded-3xl bg-tomato px-6 py-8 text-center text-white sm:py-10"
+        className={`chunky relative overflow-hidden rounded-3xl px-6 py-8 text-center text-white sm:py-10 ${
+          heading.color
+        }`}
         style={halftone("rgb(255 210 63 / 0.45)")}
       >
         <p className="chunky-sm mb-3 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-bold text-ink">
           <Sparkles className="size-4 text-tangerine" /> Mini-App #3
         </p>
         <h1 className="font-display text-3xl leading-tight [text-shadow:3px_3px_0_var(--color-ink)] sm:text-5xl">
-          Ultimate Pokémon
-          <span className="block text-sun">Pack Opener</span>
+          {heading.top}
+          <span className="block text-sun">{heading.main}</span>
         </h1>
         <p className="mt-2 font-display text-lg text-white/90 [text-shadow:2px_2px_0_var(--color-ink)]">
-          &amp; Master Binder
+          {heading.sub}
         </p>
       </header>
 
