@@ -1,26 +1,164 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-display: var(--font-bungee);
+  --font-sans: var(--font-fredoka);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: #16121f;
+  --color-paper: #fff8e7;
+  --color-sun: #ffd23f;
+  --color-tomato: #ff4f5e;
+  --color-bubble: #ff7ac6;
+  --color-grape: #8b5cf6;
+  --color-sky: #3bb9ff;
+  --color-lime: #7ee04f;
+  --color-tangerine: #ff9f1c;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-paper);
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--color-ink) 14%, transparent) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Chunky toy-box surfaces: thick ink border + hard offset shadow */
+@utility chunky {
+  border: 3px solid var(--color-ink);
+  box-shadow: 6px 6px 0 0 var(--color-ink);
+}
+
+@utility chunky-sm {
+  border: 3px solid var(--color-ink);
+  box-shadow: 3px 3px 0 0 var(--color-ink);
+}
+
+/* Snappy press-down interaction for anything clickable */
+@utility pop {
+  transition:
+    transform 120ms cubic-bezier(0.3, 1.6, 0.6, 1),
+    box-shadow 120ms ease;
+  &:hover:not(:disabled) {
+    transform: translate(-2px, -2px) rotate(-0.6deg);
+    box-shadow: 8px 8px 0 0 var(--color-ink);
+  }
+  &:active:not(:disabled) {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 0 var(--color-ink);
+  }
+}
+
+@utility pop-sm {
+  transition:
+    transform 120ms cubic-bezier(0.3, 1.6, 0.6, 1),
+    box-shadow 120ms ease;
+  &:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 0 var(--color-ink);
+  }
+  &:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 0 var(--color-ink);
+  }
+}
+
+@keyframes card-in {
+  0% {
+    transform: scale(0.85) rotate(-4deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04) rotate(1deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@utility animate-card-in {
+  animation: card-in 420ms cubic-bezier(0.3, 1.4, 0.6, 1) both;
+}
+
+@utility animate-wiggle {
+  animation: wiggle 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Holographic foil for rare cards — a shine that sweeps across the card */
+@keyframes holo-sweep {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@utility holo-epic {
+  background-image: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgb(196 160 255 / 0.55) 45%,
+    rgb(255 255 255 / 0.7) 50%,
+    rgb(196 160 255 / 0.55) 55%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  mix-blend-mode: overlay;
+  animation: holo-sweep 3.2s ease-in-out infinite;
+}
+
+@utility holo-legendary {
+  background-image: linear-gradient(
+    115deg,
+    transparent 15%,
+    rgb(255 0 128 / 0.45) 28%,
+    rgb(255 210 0 / 0.5) 38%,
+    rgb(0 255 170 / 0.45) 48%,
+    rgb(0 160 255 / 0.45) 58%,
+    rgb(190 0 255 / 0.45) 68%,
+    transparent 85%
+  );
+  background-size: 250% 100%;
+  mix-blend-mode: color-dodge;
+  animation: holo-sweep 2.4s linear infinite;
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25) rotate(20deg);
+    opacity: 0.7;
+  }
+}
+
+@utility animate-sparkle {
+  animation: sparkle 1.2s ease-in-out infinite;
 }
