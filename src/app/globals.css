@@ -682,3 +682,156 @@ html:has([data-theme="lab"]) body::after {
 @utility animate-decoder-reveal {
   animation: decoder-reveal 0.79s linear both;
 }
+
+/* ===========================================================================
+ * ID CARD FACTORY — the reanimation lab
+ * ======================================================================== */
+
+/* A riveted iron console panel, lit green from below */
+@utility lab-panel {
+  position: relative;
+  border: 3px solid #050806;
+  border-radius: 14px;
+  color: #d9f5dc;
+  background-color: #101a14;
+  background-image:
+    radial-gradient(circle at 16px 16px, #d6a041 0 3.5px, transparent 4.5px),
+    radial-gradient(circle at calc(100% - 16px) 16px, #d6a041 0 3.5px, transparent 4.5px),
+    radial-gradient(circle at 16px calc(100% - 16px), #d6a041 0 3.5px, transparent 4.5px),
+    radial-gradient(circle at calc(100% - 16px) calc(100% - 16px), #d6a041 0 3.5px, transparent 4.5px),
+    radial-gradient(ellipse 80% 60% at 50% 115%, rgb(77 255 106 / 0.14), transparent 70%),
+    linear-gradient(#17251c, #0c150f);
+  box-shadow:
+    6px 6px 0 0 #020604,
+    0 0 30px rgb(77 255 106 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+/* Secondary text on a lab panel */
+@utility lab-muted {
+  color: rgb(217 245 220 / 0.62);
+}
+
+/* Dark glass: inputs and recessed wells, glowing faintly green */
+@utility lab-glass {
+  border: 3px solid #050806;
+  border-radius: 10px;
+  background-color: #07100b;
+  color: #b9ffc4;
+  box-shadow: inset 0 0 18px rgb(77 255 106 / 0.12);
+}
+
+/* Polished brass: number plates, labels, caps */
+@utility brass {
+  border: 2px solid #050806;
+  background: linear-gradient(#f3cc78, #c08a2c 55%, #8f6118);
+  color: #2a1a04;
+}
+
+/* Bubbles rising in the chosen specimen jar */
+@keyframes bubble-up {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-5.5rem) scale(1);
+    opacity: 0;
+  }
+}
+
+@utility animate-bubble {
+  animation: bubble-up 2.4s ease-in infinite;
+}
+
+/* Lightning strike on the card when it's brought to life */
+@keyframes zap {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 0.15;
+  }
+  32% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@utility animate-zap {
+  animation: zap 0.9s ease-out both;
+}
+
+/* Spinning a specimen jar: the glass stays put while its label travels
+   round the curve, squashing as it wraps out of sight, and the other label
+   comes round from the far side */
+@keyframes jar-label-out {
+  to {
+    transform: translateX(-58%) scaleX(0.18);
+    opacity: 0;
+  }
+}
+
+@keyframes jar-label-in {
+  from {
+    transform: translateX(58%) scaleX(0.18);
+    opacity: 0;
+  }
+}
+
+/* The specimen inside drifts the same way, a little less (it's further in) */
+@keyframes jar-specimen-out {
+  to {
+    transform: translateX(-30%) scaleX(0.6);
+    opacity: 0.2;
+  }
+}
+
+@keyframes jar-specimen-in {
+  from {
+    transform: translateX(30%) scaleX(0.6);
+    opacity: 0.2;
+  }
+}
+
+/* A little wobble as the jar is turned on the bench */
+@keyframes jar-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-1.6deg);
+  }
+  70% {
+    transform: rotate(1.2deg);
+  }
+}
+
+@utility animate-jar-label-out {
+  animation: jar-label-out 0.34s ease-in both;
+}
+
+@utility animate-jar-label-in {
+  animation: jar-label-in 0.38s ease-out both;
+}
+
+@utility animate-jar-specimen-out {
+  animation: jar-specimen-out 0.34s ease-in both;
+}
+
+@utility animate-jar-specimen-in {
+  animation: jar-specimen-in 0.38s ease-out both;
+}
+
+@utility animate-jar-wobble {
+  animation: jar-wobble 0.72s ease-in-out both;
+}
