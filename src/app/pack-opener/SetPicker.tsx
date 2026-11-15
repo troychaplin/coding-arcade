@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LoaderCircle } from "lucide-react";
-import { FEATURED, loadCatalog, peekCatalog, type Era, type PackSet } from "./data";
+import { Search } from "lucide-react";
+import { FEATURED, findSet, loadCatalog, peekCatalog, type Era, type PackSet } from "./data";
 import { SetLogo } from "./PokeCard";
+import SetBrowser from "./SetBrowser";
 
 /** Every booster set, by era — loads once, then it's instant. */
 export function useCatalog() {
@@ -21,9 +22,12 @@ export function useCatalog() {
   return { eras, failed };
 }
 
+/** How many of your most-collected sets the binder shelf shows */
+const TOP_SETS = 6;
+
 /**
- * Pick a set: a row of tabs (Featured, My sets, then each era, newest first)
- * and a grid of that tab's sets.
+ * Pick a set: one shelf of quick picks, ending in "Browse all sets", which
+ * opens a sheet with every era and a search box.
  */
 export default function SetPicker({
   value,
@@ -36,9 +40,9 @@ export default function SetPicker({
 }: {
   value: string;
   onChange: (id: string) => void;
-  /** Our own packs, shown on the Featured tab */
+  /** Our own packs (Energy Surge, Legends Only), always on the shelf */
   specials: PackSet[];
-  /** Cards collected per set (binder only) — adds a "My sets" tab */
+  /** Cards collected per set (binder only): the shelf shows your top sets */
   counts?: Record<string, number>;
   disabled?: boolean;
   /** "pack": colourful wrappers; "binder": white pages with a count */
@@ -46,101 +50,139 @@ export default function SetPicker({
   label: string;
 }) {
   const { eras, failed } = useCatalog();
-  const [tab, setTab] = useState<string | null>(null);
+  const [browsing, setBrowsing] = useState(false);
 
-  const featured: Era = { id: "featured", name: "⭐ Featured", sets: [...FEATURED, ...specials] };
-  const tabs: Era[] = [featured];
-  if (counts) {
-    const seen = new Set<string>();
-    const mine = [...featured.sets, ...(eras ?? []).flatMap((e) => e.sets)].filter((s) => {
-      if (seen.has(s.id) || !counts[s.id]) return false;
-      seen.add(s.id);
-      return true;
-    });
-    if (mine.length) tabs.push({ id: "mine", name: "📒 My sets", sets: mine });
-  }
-  tabs.push(...(eras ?? []));
+  // Every set once, featured first
+  const seen = new Set<string>();
+  const all = [...FEATURED, ...specials, ...(eras ?? []).flatMap((e) => e.sets)].filter((s) => {
+    if (seen.has(s.id)) return false;
+    seen.add(s.id);
+    return true;
+  });
+  const total = all.length - specials.length;
 
-  // Until they pick a tab, show the one holding the chosen set
-  const current =
-    tabs.find((t) => t.id === tab) ?? tabs.find((t) => t.sets.some((s) => s.id === value)) ?? featured;
+  // Your sets, most cards first (binder only)
+  const mine = counts
+    ? all.filter((s) => counts[s.id] && !specials.includes(s)).sort((a, b) => counts[b.id] - counts[a.id])
+    : [];
+
+  // The shelf: featured packs (or your top sets in the binder) and our own packs,
+  // with the chosen set up front if it isn't already there
+  const base = counts && mine.length ? mine.slice(0, TOP_SETS) : FEATURED;
+  let shelf = [...base, ...specials];
+  const chosen = all.find((s) => s.id === value) ?? findSet(value);
+  if (chosen && !shelf.some((s) => s.id === chosen.id)) shelf = [chosen, ...shelf];
+
+  // The sheet's list: All sets (the default), Featured, My sets in the binder,
+  // then every era A–Z
+  const byName = [...(eras ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const tabs: Era[] = [
+    { id: "all", name: "All sets", sets: all },
+    { id: "featured", name: "⭐ Featured", sets: [...FEATURED, ...specials] },
+    ...(mine.length ? [{ id: "mine", name: "📒 My sets", sets: mine }] : []),
+    ...byName,
+  ];
 
   return (
-    <div className="flex flex-col gap-3">
-      <div role="tablist" aria-label={`${label} eras`} className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={t.id === current.id}
-            onClick={() => setTab(t.id)}
-            className={`chunky-sm cursor-pointer rounded-full px-3 py-1 text-sm font-bold ${
-              t.id === current.id ? "bg-ink text-white" : "bg-white"
-            }`}
-          >
-            {t.name}
-          </button>
+    <>
+      <div
+        role="radiogroup"
+        aria-label={label}
+        className="-mx-2 flex gap-3 overflow-x-auto px-2 pb-4 pt-2 [scrollbar-width:thin]"
+      >
+        {shelf.map((s) => (
+          <ShelfTile
+            key={s.id}
+            set={s}
+            active={s.id === value}
+            disabled={disabled}
+            variant={variant}
+            count={counts?.[s.id]}
+            onPick={() => onChange(s.id)}
+          />
         ))}
-        {!eras && (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-sm font-semibold text-ink/60">
-            {failed ? (
-              "Couldn't load more sets right now"
-            ) : (
-              <>
-                <LoaderCircle className="size-4 animate-spin" /> Finding more sets…
-              </>
-            )}
+        <button
+          type="button"
+          onClick={() => setBrowsing(true)}
+          disabled={disabled}
+          className="flex w-36 shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-[3px] border-dashed border-ink/50 bg-white/70 p-2 text-center font-bold transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Search className="size-6" strokeWidth={2.5} />
+          <span className="text-sm leading-tight">
+            {`Browse all${total > FEATURED.length ? ` ${total}` : ""} sets`}
           </span>
-        )}
+        </button>
       </div>
 
-      <div role="radiogroup" aria-label={label} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {current.sets.map((s) =>
-          variant === "pack" ? (
-            <button
-              key={s.id}
-              type="button"
-              role="radio"
-              aria-checked={s.id === value}
-              disabled={disabled}
-              onClick={() => onChange(s.id)}
-              className={`chunky-sm pop-sm cursor-pointer rounded-2xl bg-gradient-to-br p-2 ${s.wrapper} ${
-                s.id === value ? "ring-4 ring-ink ring-offset-2 ring-offset-paper" : "opacity-80"
-              }`}
-            >
-              <span className="grid h-16 place-items-center rounded-xl bg-white/90 p-2">
-                <SetLogo set={s} className="h-12" />
-              </span>
-              <span className="mt-1 block font-display text-sm leading-tight text-white [text-shadow:1px_1px_0_var(--color-ink)]">
-                {s.name}
-              </span>
-              {s.price && (
-                <span className="mt-1 inline-block rounded-full border-2 border-ink bg-sun px-2 text-[11px] font-bold">
-                  {s.price} 🪙
-                </span>
-              )}
-            </button>
-          ) : (
-            <button
-              key={s.id}
-              type="button"
-              role="radio"
-              aria-checked={s.id === value}
-              onClick={() => onChange(s.id)}
-              className={`chunky-sm pop-sm cursor-pointer rounded-2xl bg-white p-2 text-left ${
-                s.id === value ? "ring-4 ring-ink ring-offset-2 ring-offset-paper" : ""
-              }`}
-            >
-              <span className="grid h-12 place-items-center">
-                <SetLogo set={s} className="h-12" />
-              </span>
-              <span className="mt-1 block font-display text-sm leading-tight">{s.name}</span>
-              <span className="block text-xs font-semibold text-ink/60">{counts?.[s.id] ?? 0} collected</span>
-            </button>
-          ),
+      <SetBrowser
+        open={browsing}
+        onClose={() => setBrowsing(false)}
+        value={value}
+        onPick={onChange}
+        tabs={tabs}
+        loading={!eras && !failed}
+        failed={failed}
+        counts={counts}
+      />
+    </>
+  );
+}
+
+function ShelfTile({
+  set: s,
+  active,
+  disabled,
+  variant,
+  count,
+  onPick,
+}: {
+  set: PackSet;
+  active: boolean;
+  disabled: boolean;
+  variant: "pack" | "binder";
+  count?: number;
+  onPick: () => void;
+}) {
+  const ring = active ? "ring-4 ring-ink ring-offset-2 ring-offset-paper" : "";
+  if (variant === "pack") {
+    return (
+      <button
+        type="button"
+        role="radio"
+        aria-checked={active}
+        disabled={disabled}
+        onClick={onPick}
+        className={`chunky-sm pop-sm w-36 shrink-0 cursor-pointer rounded-2xl bg-gradient-to-br p-2 ${s.wrapper} ${
+          active ? ring : "opacity-80"
+        }`}
+      >
+        <span className="grid h-14 place-items-center rounded-xl bg-white/90 p-1.5">
+          <SetLogo set={s} className="h-11" />
+        </span>
+        <span className="mt-1 block font-display text-sm leading-tight text-white [text-shadow:1px_1px_0_var(--color-ink)]">
+          {s.name}
+        </span>
+        {s.price && (
+          <span className="mt-1 inline-block rounded-full border-2 border-ink bg-sun px-2 text-[11px] font-bold">
+            {s.price} 🪙
+          </span>
         )}
-      </div>
-    </div>
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onPick}
+      className={`chunky-sm pop-sm w-36 shrink-0 cursor-pointer rounded-2xl bg-white p-2 text-left ${ring}`}
+    >
+      <span className="grid h-11 place-items-center">
+        <SetLogo set={s} className="h-11" />
+      </span>
+      <span className="mt-1 block font-display text-sm leading-tight">{s.name}</span>
+      <span className="block text-xs font-semibold text-ink/60">{count ?? 0} collected</span>
+    </button>
   );
 }

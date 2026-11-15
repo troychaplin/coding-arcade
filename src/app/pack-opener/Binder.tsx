@@ -32,7 +32,7 @@ type Kind =
   | "energy";
 
 const SHOW_OPTIONS: { id: Show; label: string }[] = [
-  { id: "all", label: "All cards" },
+  { id: "all", label: "All" },
   { id: "have", label: "✅ Collected" },
   { id: "missing", label: "❓ Missing" },
 ];
@@ -173,6 +173,7 @@ export default function Binder({ collection }: { collection: Collection }) {
       count: cards.filter((c) => isKind(c, k.id, collection.cards[c.id])).length,
     }))
     .filter((k) => k.id === "any" || k.id === kind || k.count > 0);
+  const kindLabel = kinds.find((k) => k.id === kind)?.label ?? "";
   const shown = cards.filter((c) => {
     const owned = collection.cards[c.id];
     return fitsShow(owned) && isKind(c, kind, owned);
@@ -235,21 +236,51 @@ export default function Binder({ collection }: { collection: Collection }) {
             </p>
           </div>
 
-          {/* Filters */}
-          <div className="chunky flex flex-col gap-3 rounded-3xl bg-white p-4">
-            <p className="flex items-center gap-2 font-display text-lg">
-              <Filter className="size-5" /> Filter cards
-              <span className="ml-auto text-sm font-semibold text-ink/60">
-                Showing {shown.length} of {cards.length}
-              </span>
-            </p>
-            <FilterRow label="Show" options={SHOW_OPTIONS} value={show} onChange={setShow} />
-            <FilterRow
-              label="Card type"
-              options={kinds.map((k) => ({ ...k, label: k.id === "any" ? k.label : `${k.label} (${k.count})` }))}
-              value={kind}
-              onChange={setKind}
-            />
+          {/* Filters: one slim toolbar */}
+          <div className="chunky flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl bg-white px-4 py-3">
+            <div role="radiogroup" aria-label="Show" className="flex overflow-hidden rounded-full border-[3px] border-ink">
+              {SHOW_OPTIONS.map((o, i) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={o.id === show}
+                  onClick={() => setShow(o.id)}
+                  className={`cursor-pointer px-3 py-1.5 text-sm font-bold ${i ? "border-l-[3px] border-ink" : ""} ${
+                    o.id === show ? "bg-ink text-white" : "bg-white hover:bg-sun"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 text-sm font-bold">
+              <Filter className="size-4" /> Card type
+              <select
+                value={kind}
+                onChange={(e) => setKind(e.target.value as Kind)}
+                className="cursor-pointer rounded-full border-[3px] border-ink bg-paper px-3 py-1.5 font-bold outline-none focus:shadow-[0_0_0_3px_var(--color-sun)]"
+              >
+                {kinds.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.id === "any" ? k.label : `${k.label} (${k.count})`}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {kind !== "any" && (
+              <button
+                type="button"
+                onClick={() => setKind("any")}
+                aria-label={`Clear the ${kindLabel} filter`}
+                className="inline-flex cursor-pointer items-center gap-1 rounded-full border-2 border-ink bg-sun px-3 py-1 text-sm font-bold"
+              >
+                <X className="size-3.5" strokeWidth={3} /> {kindLabel}
+              </button>
+            )}
+            <span className="ml-auto text-sm font-semibold text-ink/60">
+              Showing {shown.length} of {cards.length}
+            </span>
           </div>
 
           {/* Card grid */}
@@ -337,38 +368,5 @@ export default function Binder({ collection }: { collection: Collection }) {
         </div>
       )}
     </section>
-  );
-}
-
-/** A labelled row of filter chips — pick one. */
-function FilterRow<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { id: T; label: string }[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap items-center gap-2">
-      <span className="w-20 text-xs font-bold uppercase tracking-wide text-ink/60">{label}</span>
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          role="radio"
-          aria-checked={o.id === value}
-          onClick={() => onChange(o.id)}
-          className={`cursor-pointer rounded-full border-2 border-ink px-3 py-1 text-sm font-bold ${
-            o.id === value ? "bg-grape text-white" : "bg-paper hover:bg-sun"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
   );
 }
