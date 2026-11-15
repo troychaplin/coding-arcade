@@ -13,7 +13,6 @@ import {
   BadgeCheck,
   Flame,
   FolderOpen,
-  KeyRound,
   LoaderCircle,
   Lock,
   RotateCcw,
@@ -42,12 +41,6 @@ import { useDetectiveStats } from "./useDetectiveStats";
 type Status = "playing" | "won" | "lost";
 type Feedback = "wrong" | "pick" | null;
 
-/** Comic-book halftone dots for panel backgrounds */
-const halftone = (color: string) => ({
-  backgroundImage: `radial-gradient(${color} 1.4px, transparent 1.6px)`,
-  backgroundSize: "12px 12px",
-});
-
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -60,11 +53,12 @@ function pickSuspect(pool: Suspect[], excludeId?: number): Suspect | null {
 /** Burst of emoji confetti from the middle of `box` */
 function celebrate(box: HTMLElement | null) {
   if (!box || prefersReducedMotion()) return;
-  const bits = ["⭐", "💥", "🎉", "✨", "🦸", "🔍", "💫"];
+  const bits = ["POW!", "BAM!", "ZAP!", "💥", "⭐", "WHAM!"];
   for (let i = 0; i < 28; i++) {
     const el = document.createElement("span");
     el.textContent = bits[i % bits.length];
-    el.className = "pointer-events-none absolute left-1/2 top-1/2 text-2xl";
+    el.className =
+      "pointer-events-none absolute left-1/2 top-1/2 font-display text-3xl text-[#f4d35e] [text-shadow:2px_2px_0_#000]";
     box.appendChild(el);
     const angle = Math.random() * Math.PI * 2;
     const dist = 120 + Math.random() * 160;
@@ -310,10 +304,10 @@ export default function SecretIdentity() {
       <Header />
 
       {loadError ? (
-        <Panel className="bg-white p-8 text-center">
+        <Panel className="p-8 text-center">
           <ShieldAlert className="mx-auto size-12 text-tomato" />
           <p className="mt-3 font-display text-xl">Can&apos;t reach Detective HQ!</p>
-          <p className="font-medium text-ink/70">
+          <p className="comic-muted font-medium">
             The hero files didn&apos;t load. Check the internet and try again.
           </p>
           <button
@@ -322,13 +316,13 @@ export default function SecretIdentity() {
               setLoadError(false);
               setReloadKey((k) => k + 1);
             }}
-            className="chunky pop mt-5 inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-sun px-6 py-3 font-display"
+            className="comic-panel-sm pop-sm mt-5 inline-flex cursor-pointer items-center gap-2 bg-sun px-6 py-3 font-display text-lg tracking-wide"
           >
             <RotateCcw className="size-5" /> Try again
           </button>
         </Panel>
       ) : !roster || !secret ? (
-        <Panel className="grid place-items-center bg-white p-12 text-center">
+        <Panel className="grid place-items-center p-12 text-center">
           <LoaderCircle className="size-12 animate-spin text-grape" />
           <p className="mt-3 font-display text-xl">Decrypting top secret files…</p>
         </Panel>
@@ -368,34 +362,35 @@ export default function SecretIdentity() {
               ) : (
                 <>
                   {feedback === "wrong" && (
-                    <p
-                      role="alert"
-                      className="chunky-sm inline-flex -rotate-1 animate-card-in items-center gap-2 self-start rounded-xl bg-tomato px-4 py-2 font-display text-white"
-                    >
-                      <ShieldAlert className="size-5" /> Access Denied — Wrong Identity! New clue
-                      unlocked 🔑
-                    </p>
+                    <div role="alert" className="flex animate-card-in items-center gap-2 self-start">
+                      <Burst size="size-20" fill="bg-tomato">
+                        <span className="-rotate-6 font-display text-xl text-[#fff8e7] [text-shadow:2px_2px_0_#000]">
+                          Nope!
+                        </span>
+                      </Burst>
+                      <p className="speech-balloon font-display text-lg tracking-wide">
+                        Access denied, wrong identity! New clue decoded.
+                      </p>
+                    </div>
                   )}
-                  <ClueBoard secret={secret} clueIndex={clueIndex} />
+                  <ClueBoard key={secret.id} secret={secret} clueIndex={clueIndex} />
 
                   <button
                     type="button"
                     onClick={unlockNext}
                     disabled={clueIndex >= 4}
-                    className="chunky pop flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-sky px-6 py-4 font-display text-lg disabled:cursor-not-allowed disabled:opacity-50"
+                    className="comic-panel-sm pop-sm flex cursor-pointer items-center justify-center gap-3 bg-tomato px-6 py-4 font-display text-xl tracking-wide text-[#fff8e7] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <KeyRound className="size-6" strokeWidth={2.5} />
-                    {clueIndex >= 4 ? "All clues unlocked!" : "Unlock Next Clue (−100 pts)"}
+                    <span aria-hidden className="decoder-lens block h-7 w-11 -rotate-6" />
+                    {clueIndex >= 4 ? "Every clue decoded!" : "Decode next clue (−100 pts)"}
                   </button>
 
                   {/* Guess box */}
-                  <Panel className="relative bg-white p-5" style={halftone("rgb(22 18 31 / 0.06)")}>
+                  <Panel className="p-5 pt-6">
                     <div ref={guessBoxRef}>
-                      <label
-                        htmlFor="guess"
-                        className="mb-2 flex items-center gap-2 font-display text-lg"
-                      >
-                        <Search className="size-5" strokeWidth={3} /> Who is it, Detective?
+                      <label htmlFor="guess" className="speech-balloon mb-6 font-display text-xl tracking-wide">
+                        <Search className="mr-1.5 inline size-5 -translate-y-0.5" strokeWidth={3} />
+                        Who is it, Detective?
                       </label>
                       <form
                         className="flex flex-col gap-3 sm:flex-row"
@@ -428,15 +423,15 @@ export default function SecretIdentity() {
                             onFocus={() => setOpen(true)}
                             onBlur={() => setTimeout(() => setOpen(false), 120)}
                             onKeyDown={onKeyDown}
-                            className={`chunky-sm w-full rounded-2xl px-4 py-3 font-display text-xl outline-none transition-shadow focus:shadow-[3px_3px_0_0_var(--color-ink),0_0_0_4px_var(--color-sun)] ${
-                              feedback === "wrong" ? "bg-tomato/15" : "bg-paper"
+                            className={`comic-panel-sm w-full px-4 py-3 font-display text-xl tracking-wide text-[#ebe4d2] outline-none placeholder:text-[#ebe4d2]/40 focus:shadow-[4px_4px_0_0_#000,0_0_0_4px_var(--color-sun)] ${
+                              feedback === "wrong" ? "bg-[#3a1419]" : "bg-[#0e1018]"
                             }`}
                           />
                           {open && suggestions.length > 0 && (
                             <ul
                               id="hero-suggestions"
                               role="listbox"
-                              className="chunky absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-2xl bg-white py-1"
+                              className="comic-panel-sm absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto bg-[#0e1018] py-1 text-[#ebe4d2]"
                             >
                               {suggestions.map((name, i) => (
                                 <li
@@ -462,29 +457,31 @@ export default function SecretIdentity() {
                         <button
                           type="submit"
                           disabled={!guess.trim()}
-                          className="chunky pop flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-tomato px-6 py-3 font-display text-lg text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          className="comic-panel-sm pop-sm flex cursor-pointer items-center justify-center gap-2 bg-tomato px-6 py-3 font-display text-xl tracking-wide text-[#fff8e7] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <VenetianMask className="size-6" strokeWidth={2.5} /> Guess!
                         </button>
                       </form>
 
                       {suspects.length > 0 ? (
-                        <div className="mt-5">
-                          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink/60">
-                            Or tap a suspect · {suspects.length} left
+                        <div className="mt-6">
+                          <p className="comic-caption mb-3 text-sm">
+                            The line-up: tap a suspect ({suspects.length} left)
                           </p>
                           <div
                             className={`grid gap-3 ${
                               suspects.length > 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"
                             }`}
                           >
-                            {suspects.map((name) => (
+                            {suspects.map((name, i) => (
                               <button
                                 key={name}
                                 type="button"
                                 onClick={() => makeGuess(name)}
                                 aria-label={`Accuse ${name}`}
-                                className="chunky-sm pop-sm flex min-h-14 cursor-pointer animate-card-in items-center justify-center rounded-2xl bg-paper px-3 py-2 text-center font-display text-sm leading-tight hover:bg-sun sm:text-base"
+                                className={`comic-panel-sm pop-sm flex min-h-14 cursor-pointer animate-card-in items-center justify-center bg-[#262a3a] px-3 py-2 text-center font-display text-base leading-tight tracking-wide text-[#ebe4d2] hover:bg-sun hover:text-ink sm:text-lg ${
+                                  i % 2 ? "rotate-1" : "-rotate-1"
+                                }`}
                               >
                                 {name}
                               </button>
@@ -492,9 +489,9 @@ export default function SecretIdentity() {
                           </div>
                         </div>
                       ) : (
-                        <p className="mt-4 rounded-xl border-[3px] border-dashed border-ink/30 px-4 py-3 text-sm font-semibold text-ink/70">
-                          🕵️ No suspect list yet! Start typing a name to search, or unlock Clue 2
-                          to see 8 suspects to choose from.
+                        <p className="comic-muted mt-5 border-[3px] border-dashed border-[#ebe4d2]/30 px-4 py-3 text-sm font-semibold">
+                          🕵️ No line-up yet! Start typing a name to search, or decode Clue 2 to
+                          see 8 suspects to choose from.
                         </p>
                       )}
                     </div>
@@ -505,7 +502,7 @@ export default function SecretIdentity() {
                       </p>
                     )}
                     {ruledOut.length > 0 && (
-                      <p className="mt-3 text-sm font-semibold text-ink/70">
+                      <p className="comic-muted mt-3 text-sm font-semibold">
                         Ruled out:{" "}
                         {ruledOut.map((name) => (
                           <span key={name} className="mr-2 whitespace-nowrap line-through">
@@ -514,8 +511,8 @@ export default function SecretIdentity() {
                         ))}
                       </p>
                     )}
-                    <p className="mt-3 text-sm font-medium text-ink/60">
-                      Stuck? A wrong guess just unlocks the next clue. Keep going, Detective!
+                    <p className="comic-muted mt-3 text-sm font-medium">
+                      Stuck? A wrong guess just decodes the next clue. Keep going, Detective!
                     </p>
                   </Panel>
                 </>
@@ -532,6 +529,7 @@ export default function SecretIdentity() {
  * Pieces
  * ------------------------------------------------------------------------- */
 
+/** A comic book panel */
 function Panel({
   className = "",
   style,
@@ -542,9 +540,18 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <div className={`chunky rounded-3xl ${className}`} style={style}>
+    <div className={`comic-panel ${className}`} style={style}>
       {children}
     </div>
+  );
+}
+
+/** A sound-effect starburst with an inked outline */
+function Burst({ size, fill, children }: { size: string; fill: string; children: ReactNode }) {
+  return (
+    <span className={`comic-burst grid shrink-0 bg-[#050507] p-1 ${size}`}>
+      <span className={`comic-burst grid place-items-center text-center ${fill}`}>{children}</span>
+    </span>
   );
 }
 
@@ -605,12 +612,10 @@ function Toolbar({
   stats: { score: number; streak: number; bestStreak: number; solved: number };
 }) {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="mb-2 text-xs font-bold uppercase tracking-wider opacity-70">
-          Pick your case files
-        </p>
-        <div role="radiogroup" aria-label="Hero category" className="flex flex-wrap gap-2">
+        <p className="comic-caption mb-3 text-sm">Pick your case files</p>
+        <div role="radiogroup" aria-label="Hero category" className="flex flex-wrap gap-2.5">
           {(Object.keys(CATEGORIES) as Category[]).map((id) => {
             const c = CATEGORIES[id];
             const active = category === id;
@@ -621,14 +626,14 @@ function Toolbar({
                 role="radio"
                 aria-checked={active}
                 onClick={() => onCategory(id)}
-                className={`chunky-sm pop-sm cursor-pointer rounded-2xl px-4 py-2 text-left ${
-                  active ? "bg-grape text-white" : "bg-white"
+                className={`comic-panel-sm pop-sm cursor-pointer px-4 py-2 text-left ${
+                  active ? "bg-sun" : "bg-[#171a24] text-[#ebe4d2]"
                 }`}
               >
-                <span className="block font-display text-sm">
+                <span className="block font-display text-base tracking-wide">
                   {c.emoji} {c.label}
                 </span>
-                <span className={`block text-xs font-semibold ${active ? "text-white/85" : "text-ink/60"}`}>
+                <span className={`block text-xs font-semibold ${active ? "text-ink/70" : "comic-muted"}`}>
                   {counts[id]} suspects
                 </span>
               </button>
@@ -647,20 +652,19 @@ function Toolbar({
   );
 }
 
+/** How to play, told as a three-panel comic strip */
 function HowToPlay() {
   const steps = [
     { emoji: "🔍", text: "Read the clues and look at the blurry photo." },
     { emoji: "⌨️", text: "Type your guess. From Clue 2 you get suspects to tap!" },
-    { emoji: "🔑", text: "Each new clue makes the photo clearer and the list shorter." },
+    { emoji: "🔑", text: "Each clue you decode makes the photo clearer and the list shorter." },
   ];
   return (
-    <ol className="grid gap-3 sm:grid-cols-3">
+    <ol className="grid gap-5 sm:grid-cols-3">
       {steps.map((step, i) => (
-        <li
-          key={i}
-          className="flex items-center gap-3 rounded-2xl border-[3px] border-dashed border-ink/30 bg-white/70 px-4 py-2 text-sm font-semibold"
-        >
-          <span className="text-2xl" aria-hidden>
+        <li key={i} className="comic-panel flex items-center gap-3 px-4 pb-3 pt-5 text-sm font-semibold">
+          <span className="comic-caption absolute -top-3.5 left-3 text-sm">{i + 1}</span>
+          <span className="text-3xl" aria-hidden>
             {step.emoji}
           </span>
           {step.text}
@@ -682,11 +686,11 @@ function Stat({
   color: string;
 }) {
   return (
-    <div className={`chunky-sm rounded-xl px-3 py-1.5 ${color}`}>
+    <div className={`comic-panel-sm px-3 py-1.5 ${color}`}>
       <dt className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide">
         {icon} {label}
       </dt>
-      <dd className="font-display text-xl leading-tight">{value}</dd>
+      <dd className="font-display text-2xl leading-tight tracking-wide">{value}</dd>
     </div>
   );
 }
@@ -708,61 +712,72 @@ function Dossier({
 }) {
   const solved = status !== "playing";
   return (
-    <article className="chunky relative rounded-3xl bg-[#f3d9a4] p-4 pt-10">
-      {/* Folder tab */}
-      <span className="absolute -top-[3px] left-6 rounded-b-xl border-[3px] border-t-0 border-ink bg-tomato px-4 py-1 font-display text-xs tracking-widest text-white">
+    <article className="comic-panel p-4 pt-8">
+      <span className="comic-caption absolute -top-4 left-4 -rotate-2 text-sm">
         Case #{String(secret.id).padStart(4, "0")}
       </span>
 
-      <div className="chunky-sm relative aspect-[3/4] overflow-hidden rounded-xl bg-ink">
-        {/* Standard <img> so the external portrait loads without next/image config */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={secret.id}
-          src={secret.image}
-          alt={solved ? `${secret.name} portrait` : "Classified suspect photo"}
-          className={`size-full object-cover transition-[filter,transform] duration-700 ease-out ${
-            blur > 0 ? "scale-110" : "scale-100"
-          }`}
-          style={{ filter: `blur(${blur}px)` }}
-        />
-        {status === "playing" && (
-          <Stamp text="Classified" color="border-tomato text-tomato bg-white/40" />
-        )}
-        {status === "won" && (
-          <Stamp text="Unmasked!" color="border-lime text-lime bg-white/60 animate-card-in" />
-        )}
-        {status === "lost" && (
-          <Stamp text="Case Closed" color="border-grape text-grape bg-white/60 animate-card-in" />
-        )}
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-ink/60">
-            {solved ? "Identity" : "Suspect"}
-          </p>
-          <p className="font-display text-xl leading-tight">
-            {solved ? secret.name : "▇▇▇▇▇▇"}
-          </p>
+      <div className="relative">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[3px] border-4 border-[#050507] bg-ink">
+          {/* Standard <img> so the external portrait loads without next/image config */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            key={secret.id}
+            src={secret.image}
+            alt={solved ? `${secret.name} portrait` : "Classified suspect photo"}
+            className={`size-full object-cover transition-[filter,transform] duration-700 ease-out ${
+              blur > 0 ? "scale-110" : "scale-100"
+            }`}
+            style={{ filter: `blur(${blur}px)` }}
+          />
+          {status === "playing" && (
+            <Stamp text="Classified" color="border-tomato text-tomato bg-white/40" />
+          )}
+          {status === "won" && (
+            <Stamp text="Unmasked!" color="border-lime text-lime bg-white/60 animate-card-in" />
+          )}
+          {status === "lost" && (
+            <Stamp text="Case Closed" color="border-grape text-grape bg-white/60 animate-card-in" />
+          )}
         </div>
-        <div className="chunky-sm rounded-xl bg-white px-3 py-1 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-ink/60">
-            {status === "won" ? "Earned" : status === "lost" ? "Earned" : "Reward"}
-          </p>
-          <p className="font-display text-2xl leading-none text-tomato">
-            {status === "playing" ? potential : awarded}
-          </p>
+        {/* The reward, as a starburst over the corner of the photo */}
+        <div className="absolute -right-3 -top-4 z-20 rotate-6">
+          <Burst size="size-24" fill="bg-sun">
+            <span className="leading-none">
+              <span className="block text-[10px] font-bold uppercase tracking-wider">
+                {status === "playing" ? "Reward" : "Earned"}
+              </span>
+              <span className="block font-display text-2xl text-tomato">
+                {status === "playing" ? potential : awarded}
+              </span>
+            </span>
+          </Burst>
         </div>
       </div>
 
-      {/* Clue pips */}
-      <div className="mt-3 flex gap-1.5" aria-label={`Clue ${clueIndex + 1} of 5`}>
+      <div className="mt-4">
+        <p className="comic-muted text-xs font-bold uppercase tracking-wider">
+          {solved ? "Identity" : "Suspect"}
+        </p>
+        <p className="font-display text-2xl leading-tight tracking-wide">
+          {solved ? (
+            secret.name
+          ) : (
+            <span
+              aria-label="Name redacted"
+              className="mt-1 inline-block h-6 w-44 -rotate-1 bg-[#050507] ring-1 ring-[#ebe4d2]/35"
+            />
+          )}
+        </p>
+      </div>
+
+      {/* Clues decoded so far: red once decoded, still scrambled if not */}
+      <div className="mt-3 flex gap-1.5" aria-label={`Clue ${clueIndex + 1} of 5 decoded`}>
         {[0, 1, 2, 3, 4].map((i) => (
           <span
             key={i}
-            className={`h-3 flex-1 rounded-full border-2 border-ink ${
-              i <= clueIndex ? "bg-tomato" : "bg-white/70"
+            className={`h-4 flex-1 rounded-[2px] border-2 border-[#050507] ${
+              i <= clueIndex ? "bg-tomato" : "decoder-noise"
             }`}
           />
         ))}
@@ -774,7 +789,7 @@ function Dossier({
 function ClueBoard({ secret, clueIndex }: { secret: Suspect; clueIndex: number }) {
   const clues = cluesFor(secret);
   return (
-    <ol className="grid gap-4 sm:grid-cols-2">
+    <ol className="grid gap-x-4 gap-y-7 pt-3 sm:grid-cols-2">
       {clues.map((clue, i) => (
         <li key={clue.title} className={i === 4 ? "sm:col-span-2" : ""}>
           <ClueCard clue={clue} n={i + 1} unlocked={i <= clueIndex} fresh={i === clueIndex} />
@@ -784,7 +799,8 @@ function ClueBoard({ secret, clueIndex }: { secret: Suspect; clueIndex: number }
   );
 }
 
-const CLUE_COLORS = ["bg-sky", "bg-lime", "bg-tangerine", "bg-bubble", "bg-grape"];
+/** Gibberish printed under the scramble lines of a locked clue */
+const SCRAMBLE = ["QX7 ZRK 9WF MT4", "PLV 2HD XQ8 KJ", "WM3 TZK RQ5 BXN", "J8K VXQ 4LM ZPT", "RT9 KXW QZ2 MVL"];
 
 function ClueCard({
   clue,
@@ -795,41 +811,30 @@ function ClueCard({
   clue: Clue;
   n: number;
   unlocked: boolean;
+  /** The clue just decoded: play the decoder sweep */
   fresh: boolean;
 }) {
   return (
-    <div
-      className={`chunky h-full overflow-hidden rounded-2xl bg-white ${
-        fresh && n > 1 ? "animate-card-in" : ""
-      } ${unlocked ? "" : "brightness-[0.82]"}`}
-    >
-      <div
-        className={`flex items-center justify-between gap-2 border-b-[3px] border-ink px-4 py-2 ${
-          unlocked ? CLUE_COLORS[n - 1] : "bg-ink/10"
-        } ${n === 5 && unlocked ? "text-white" : ""}`}
+    <div className="comic-panel h-full px-4 pb-4 pt-6">
+      <span
+        className={`comic-caption absolute -top-4 left-3 text-sm ${
+          unlocked ? "" : "!bg-[#cfc4a8] text-ink/70"
+        } ${n % 2 ? "-rotate-1" : "rotate-1"}`}
       >
-        <span className="font-display text-sm">
-          {clue.emoji} Clue {n}: {clue.title}
-        </span>
-        <span className="rounded-full border-2 border-ink bg-white px-2 text-xs font-bold text-ink">
-          {clue.points} pts
-        </span>
-      </div>
-      <div className="p-4">
-        {unlocked ? (
-          <div className="flex flex-col gap-3">
-            {clue.puzzle && (
-              <p
-                aria-label={`Name puzzle: ${clue.puzzle}`}
-                className="rounded-xl border-[3px] border-ink bg-sun px-3 py-2 text-center font-mono text-2xl font-bold tracking-wider break-words"
-              >
-                {clue.puzzle}
-              </p>
-            )}
+        {clue.emoji} Clue {n}: {clue.title}
+      </span>
+      <span className="absolute -top-3 right-3 rounded-full border-[3px] border-[#050507] bg-white px-2 text-xs font-bold text-ink">
+        {clue.points} pts
+      </span>
+
+      {unlocked ? (
+        <div className="relative overflow-hidden">
+          <div className={`flex flex-col gap-3 ${fresh ? "animate-decoder-reveal" : ""}`}>
+            {clue.puzzle && <PuzzleTiles puzzle={clue.puzzle} />}
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
               {clue.rows.map((row) => (
                 <div key={row.label} className={row.value.length > 24 ? "col-span-2" : ""}>
-                  <dt className="text-[11px] font-bold uppercase tracking-wide text-ink/60">
+                  <dt className="comic-muted text-[11px] font-bold uppercase tracking-wide">
                     {row.label}
                   </dt>
                   <dd className="font-semibold leading-snug break-words">
@@ -840,38 +845,97 @@ function ClueCard({
             </dl>
             {clue.stats && <PowerBars stats={clue.stats} />}
           </div>
-        ) : (
-          <div className="flex items-center gap-3 text-ink/50">
-            <Lock className="size-5 shrink-0" strokeWidth={2.5} />
-            <div className="flex flex-1 flex-col gap-1.5" aria-label="Locked clue">
-              <span className="h-3 w-4/5 rounded bg-ink/80" />
-              <span className="h-3 w-3/5 rounded bg-ink/80" />
-            </div>
-          </div>
-        )}
-      </div>
+          {/* The red decoder sliding over the card (parked off the edge when still) */}
+          {fresh && (
+            <span
+              aria-hidden
+              className="decoder-lens pointer-events-none absolute inset-y-0 w-2/5 animate-decoder-sweep"
+              style={{ left: "100%" }}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="decoder-noise relative flex min-h-16 items-center rounded-[3px] border-[3px] border-[#050507] px-3 py-2">
+          <p aria-hidden className="select-none font-display text-xl tracking-[0.2em] text-[rgb(255_90_100/0.8)]">
+            {SCRAMBLE[n - 1]}
+          </p>
+          <span className="absolute right-2 top-2 grid size-7 place-items-center rounded-full border-2 border-[#050507] bg-[#0e1018] text-[#ebe4d2]">
+            <Lock className="size-3.5" strokeWidth={3} aria-hidden />
+          </span>
+          <span className="sr-only">Locked clue. Decode it to read it.</span>
+        </div>
+      )}
     </div>
   );
 }
 
+/** The letter puzzle as cipher tiles, one row of tiles per word */
+function PuzzleTiles({ puzzle }: { puzzle: string }) {
+  // Each word starts with its (shown) first letter; "_" are the hidden ones
+  const words: string[][] = [];
+  for (const token of puzzle.split(" ")) {
+    if (/[A-Za-z0-9]/.test(token) || !words.length) words.push([token]);
+    else words[words.length - 1].push(token);
+  }
+  return (
+    <div
+      aria-label={`Name puzzle: ${puzzle}`}
+      role="img"
+      className="comic-well flex flex-wrap justify-center gap-x-5 gap-y-2 px-3 py-3"
+    >
+      {words.map((word, w) => (
+        <span key={w} className="flex gap-1">
+          {word.map((ch, i) =>
+            ch === "_" || /[A-Za-z0-9]/.test(ch) ? (
+              <span
+                key={i}
+                className={`grid h-9 w-7 place-items-center rounded-[3px] border-[3px] border-[#050507] font-display text-xl ${
+                  ch === "_" ? "bg-[#2a2e3c]" : "bg-sun"
+                }`}
+              >
+                {ch === "_" ? "" : ch}
+              </span>
+            ) : (
+              <span key={i} className="self-end font-display text-xl">
+                {ch}
+              </span>
+            ),
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** Super-skills as an 80s tech spec chart: red bars out of 10 */
 function PowerBars({ stats }: { stats: NonNullable<Clue["stats"]> }) {
   return (
-    <div className="grid gap-1.5" aria-label="Super-skills">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-ink/60">Super-skills</p>
-      {STAT_LABELS.map(({ key, label, emoji }) => (
-        <div key={key} className="grid grid-cols-[6.5rem_1fr_2rem] items-center gap-2 text-sm font-semibold">
-          <span>
-            {emoji} {label}
-          </span>
-          <span className="h-3 overflow-hidden rounded-full border-2 border-ink bg-ink/10">
-            <span
-              className="block h-full rounded-full bg-tomato"
-              style={{ width: `${Math.max(4, stats[key])}%` }}
-            />
-          </span>
-          <span className="text-right tabular-nums">{stats[key]}</span>
-        </div>
-      ))}
+    <div className="comic-well p-3" aria-label="Super-skills, out of 10">
+      <p className="mb-2 flex items-baseline justify-between font-display text-base tracking-wide">
+        Tech specs
+        <span className="comic-muted text-xs font-bold tracking-normal">out of 10</span>
+      </p>
+      <div className="grid gap-1.5">
+        {STAT_LABELS.map(({ key, label, emoji }) => {
+          const score = Math.max(1, Math.round(stats[key] / 10));
+          return (
+            <div key={key} className="grid grid-cols-[6.5rem_1fr_1.5rem] items-center gap-2 text-sm font-semibold">
+              <span>
+                {emoji} {label}
+              </span>
+              <span className="grid grid-cols-10 gap-[2px]" title={`${stats[key]} / 100`}>
+                {Array.from({ length: 10 }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`h-4 rounded-[2px] border-[1.5px] border-[#050507] ${i < score ? "bg-tomato" : "bg-[#2a2e3c]"}`}
+                  />
+                ))}
+              </span>
+              <span className="text-right font-display text-base tabular-nums">{score}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -885,7 +949,7 @@ function RedactedText({ text }: { text: string }) {
         <span key={i}>
           {part}
           {i < parts.length - 1 && (
-            <span className="mx-0.5 rounded bg-ink px-1.5 py-0.5 text-xs font-bold tracking-wider text-paper">
+            <span className="mx-0.5 inline-block -rotate-1 bg-[#050507] px-1.5 py-0.5 text-xs font-bold tracking-wider text-paper ring-1 ring-[#ebe4d2]/35">
               REDACTED
             </span>
           )}
@@ -909,15 +973,17 @@ function CaseClosed({
   const won = status === "won";
   const clues = cluesFor(secret, true);
   return (
-    <div className="flex animate-card-in flex-col gap-5">
-      <Panel
-        className={`p-6 text-center ${won ? "bg-lime" : "bg-bubble"}`}
-        style={halftone("rgb(255 255 255 / 0.45)")}
-      >
-        <p className="font-display text-3xl leading-tight [text-shadow:3px_3px_0_white] sm:text-4xl">
-          {won ? "Case Cracked! 🎉" : "The suspect escaped! 💨"}
+    <div className="flex animate-card-in flex-col gap-6">
+      <Panel className="flex flex-col items-center p-6 text-center">
+        <Burst size="size-44 sm:size-52" fill={won ? "bg-sun" : "bg-sky"}>
+          <span className="-rotate-6 font-display text-4xl text-tomato [text-shadow:3px_3px_0_#000] sm:text-5xl">
+            {won ? "Ka-pow!" : "Whoosh!"}
+          </span>
+        </Burst>
+        <p className="mt-3 font-display text-3xl tracking-wide sm:text-4xl">
+          {won ? "Case cracked!" : "The suspect escaped!"}
         </p>
-        <p className="mt-2 text-lg font-semibold">
+        <p className="mt-2 max-w-md text-lg font-semibold">
           {won ? (
             <>
               It was <strong>{secret.name}</strong>! You earned{" "}
@@ -925,19 +991,18 @@ function CaseClosed({
             </>
           ) : (
             <>
-              It was <strong>{secret.name}</strong> all along. Your streak resets —
-              crack the next one!
+              It was <strong>{secret.name}</strong> all along. Your streak resets, so crack
+              the next one!
             </>
           )}
         </p>
       </Panel>
 
-      <Panel className="overflow-hidden bg-white">
-        <div className="flex items-center gap-2 border-b-[3px] border-ink bg-ink px-5 py-3 text-paper">
-          <FolderOpen className="size-5" />
-          <span className="font-display tracking-wider">Full Hero Dossier</span>
-        </div>
-        <div className="grid gap-x-6 gap-y-3 p-5 sm:grid-cols-2">
+      <Panel className="px-5 pb-5 pt-8">
+        <span className="comic-caption absolute -top-4 left-4 -rotate-1 text-sm">
+          <FolderOpen className="size-4" /> Full hero dossier
+        </span>
+        <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
           <Fact label="Codename" value={secret.name} />
           <Fact label="Power rating" value={`${secret.powerTotal} / 600`} />
           {clues.flatMap((c) =>
@@ -950,9 +1015,9 @@ function CaseClosed({
         type="button"
         onClick={onNext}
         autoFocus
-        className="chunky pop flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-tomato px-6 py-4 font-display text-xl text-white"
+        className="comic-panel-sm pop-sm flex cursor-pointer items-center justify-center gap-2 bg-tomato px-6 py-4 font-display text-2xl tracking-wide text-[#fff8e7]"
       >
-        <Search className="size-6" strokeWidth={3} /> Next Case
+        <Search className="size-6" strokeWidth={3} /> Next case
       </button>
     </div>
   );
@@ -961,7 +1026,7 @@ function CaseClosed({
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[11px] font-bold uppercase tracking-wide text-ink/60">{label}</p>
+      <p className="comic-muted text-[11px] font-bold uppercase tracking-wide">{label}</p>
       <p className="font-semibold leading-snug break-words">{value}</p>
     </div>
   );
