@@ -1,16 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { LoaderCircle, PackageOpen, RotateCcw, ShieldAlert, Sparkles, X } from "lucide-react";
-import { ENERGY_PACK, PACK_SETS, cardImage, loadSet, type SetData } from "./data";
-import { CardFace, SetLogo, ShinyTag } from "./PokeCard";
-import type { Collection } from "./useCollection";
+import { Filter, LoaderCircle, PackageOpen, RotateCcw, ShieldAlert, Sparkles, X } from "lucide-react";
+import {
+  ENERGY_PACK,
+  ENERGY_SET,
+  FEATURED,
+  cardImage,
+  loadSet,
+  loadSetTags,
+  type CardBrief,
+  type SetData,
+  type SetTags,
+} from "./data";
+import { CardFace, ShinyTag } from "./PokeCard";
+import SetPicker from "./SetPicker";
+import type { Collection, OwnedCard } from "./useCollection";
+
+type Show = "all" | "have" | "missing";
+type Kind =
+  | "any"
+  | "pokemon"
+  | "common"
+  | "uncommon"
+  | "rare"
+  | "special"
+  | "legendary"
+  | "holo"
+  | "trainer"
+  | "energy";
+
+const SHOW_OPTIONS: { id: Show; label: string }[] = [
+  { id: "all", label: "All cards" },
+  { id: "have", label: "✅ Collected" },
+  { id: "missing", label: "❓ Missing" },
+];
+
+/** Card-type filters. Energy Surge gets its own names for the two kinds of energy. */
+function kindOptions(energyPage: boolean): { id: Kind; label: string }[] {
+  if (energyPage) {
+    return [
+      { id: "any", label: "Any energy" },
+      { id: "common", label: "⚡ Basic energy" },
+      { id: "rare", label: "🌈 Special energy" },
+      { id: "holo", label: "✨ My holos" },
+    ];
+  }
+  return [
+    { id: "any", label: "Any type" },
+    { id: "pokemon", label: "🐾 Pokémon" },
+    { id: "common", label: "● Common" },
+    { id: "uncommon", label: "◆ Uncommon" },
+    { id: "rare", label: "★ Rare" },
+    { id: "special", label: "🌟 Ultra rare" },
+    { id: "legendary", label: "👑 Legendary" },
+    { id: "holo", label: "✨ My holos" },
+    { id: "trainer", label: "🧢 Trainer" },
+    { id: "energy", label: "🔋 Energy" },
+  ];
+}
 
 export default function Binder({ collection }: { collection: Collection }) {
   // Show the set they opened last, until they pick another
   const [picked, setPicked] = useState<string | null>(null);
-  const setId = picked ?? collection.lastSet ?? PACK_SETS[1].id;
+  const setId = picked ?? collection.lastSet ?? FEATURED[1].id;
+  const [show, setShow] = useState<Show>("all");
+  const [kind, setKind] = useState<Kind>("any");
+  const [tags, setTags] = useState<{ setId: string; tags: SetTags } | null>(null);
 
   const [data, setData] = useState<SetData | null>(null);
   const [error, setError] = useState(false);
@@ -34,6 +91,34 @@ export default function Binder({ collection }: { collection: Collection }) {
     };
   }, [setId, retry]);
 
+  // Which cards are legendary / Trainer / Energy, for the filters (no fuss if it fails)
+  useEffect(() => {
+    let cancelled = false;
+    loadSetTags(setId)
+      .then((t) => !cancelled && setTags({ setId, tags: t }))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [setId]);
+
+  // Cards collected per binder page
+  const counts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const c of Object.values(collection.cards)) {
+      out[c.setId] = (out[c.setId] ?? 0) + 1;
+      // Energies count toward the Energy page whichever pack they came from
+      if (c.isEnergy && c.setId !== ENERGY_PACK) out[ENERGY_PACK] = (out[ENERGY_PACK] ?? 0) + 1;
+    }
+    return out;
+  }, [collection.cards]);
+
+  function pickSet(id: string) {
+    setPicked(id);
+    setShow("all");
+    setKind("any");
+  }
+
   // Close the zoomed card with Escape
   useEffect(() => {
     if (!zoomed) return;
@@ -42,9 +127,56 @@ export default function Binder({ collection }: { collection: Collection }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [zoomed]);
 
-  const ready = data?.id === setId;
+  const ready = data !== null && data.id === setId;
   const isEnergyPage = setId === ENERGY_PACK;
   const cards = ready ? data.cards : [];
+  const pageTags = tags?.setId === setId ? tags.tags : null;
+
+  // Does a card fit the chosen filters?
+  const rarityLists = useMemo(
+    () =>
+      ready
+        ? {
+            common: new Set(data.common),
+            uncommon: new Set(data.uncommon),
+            rare: new Set(data.rare),
+            special: new Set(data.special),
+          }
+        : null,
+    [ready, data],
+  );
+  const isKind = (card: CardBrief, k: Kind, owned: OwnedCard | undefined): boolean => {
+    switch (k) {
+      case "any":
+        return true;
+      case "holo":
+        return Boolean(owned?.shiny);
+      case "common":
+      case "uncommon":
+      case "rare":
+      case "special":
+        return Boolean(rarityLists?.[k].has(card.id));
+      case "legendary":
+      case "trainer":
+      case "energy":
+        return Boolean(pageTags?.[k].has(card.id));
+      case "pokemon":
+        return Boolean(pageTags) && !pageTags!.trainer.has(card.id) && !pageTags!.energy.has(card.id);
+    }
+  };
+  const fitsShow = (owned: OwnedCard | undefined) =>
+    show === "all" || (show === "have" ? Boolean(owned) : !owned);
+  // Only offer filters that match at least one card on this page
+  const kinds = kindOptions(isEnergyPage)
+    .map((k) => ({
+      ...k,
+      count: cards.filter((c) => isKind(c, k.id, collection.cards[c.id])).length,
+    }))
+    .filter((k) => k.id === "any" || k.id === kind || k.count > 0);
+  const shown = cards.filter((c) => {
+    const owned = collection.cards[c.id];
+    return fitsShow(owned) && isKind(c, kind, owned);
+  });
   const ownedCount = cards.filter((c) => collection.cards[c.id]).length;
   const holoCount = cards.filter((c) => collection.cards[c.id]?.shiny).length;
   const percent = cards.length ? Math.round((ownedCount / cards.length) * 100) : 0;
@@ -53,32 +185,14 @@ export default function Binder({ collection }: { collection: Collection }) {
 
   return (
     <section className="flex flex-col gap-6">
-      <div role="radiogroup" aria-label="Binder set" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {PACK_SETS.map((s) => {
-          // Energies count toward the Energy page whichever pack they came from
-          const owned = Object.values(collection.cards).filter((c) =>
-            s.id === ENERGY_PACK ? c.isEnergy : c.setId === s.id,
-          ).length;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              role="radio"
-              aria-checked={s.id === setId}
-              onClick={() => setPicked(s.id)}
-              className={`chunky-sm pop-sm cursor-pointer rounded-2xl bg-white p-2 text-left ${
-                s.id === setId ? "ring-4 ring-ink ring-offset-2 ring-offset-paper" : ""
-              }`}
-            >
-              <span className="grid h-12 place-items-center">
-                <SetLogo setId={s.id} className="h-12" />
-              </span>
-              <span className="mt-1 block font-display text-sm">{s.name}</span>
-              <span className="block text-xs font-semibold text-ink/60">{owned} collected</span>
-            </button>
-          );
-        })}
-      </div>
+      <SetPicker
+        value={setId}
+        onChange={pickSet}
+        specials={[ENERGY_SET]}
+        counts={counts}
+        variant="binder"
+        label="Binder set"
+      />
 
       {error ? (
         <div className="chunky rounded-3xl bg-white p-8 text-center">
@@ -121,9 +235,31 @@ export default function Binder({ collection }: { collection: Collection }) {
             </p>
           </div>
 
+          {/* Filters */}
+          <div className="chunky flex flex-col gap-3 rounded-3xl bg-white p-4">
+            <p className="flex items-center gap-2 font-display text-lg">
+              <Filter className="size-5" /> Filter cards
+              <span className="ml-auto text-sm font-semibold text-ink/60">
+                Showing {shown.length} of {cards.length}
+              </span>
+            </p>
+            <FilterRow label="Show" options={SHOW_OPTIONS} value={show} onChange={setShow} />
+            <FilterRow
+              label="Card type"
+              options={kinds.map((k) => ({ ...k, label: k.id === "any" ? k.label : `${k.label} (${k.count})` }))}
+              value={kind}
+              onChange={setKind}
+            />
+          </div>
+
           {/* Card grid */}
+          {shown.length === 0 && (
+            <p className="chunky rounded-3xl bg-white p-8 text-center font-display text-lg">
+              No cards match these filters{show === "have" ? " yet — keep opening packs!" : "."}
+            </p>
+          )}
           <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {cards.map((card) => {
+            {shown.map((card) => {
               const owned = collection.cards[card.id];
               return (
                 <li key={card.id}>
@@ -201,5 +337,38 @@ export default function Binder({ collection }: { collection: Collection }) {
         </div>
       )}
     </section>
+  );
+}
+
+/** A labelled row of filter chips — pick one. */
+function FilterRow<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap items-center gap-2">
+      <span className="w-20 text-xs font-bold uppercase tracking-wide text-ink/60">{label}</span>
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={o.id === value}
+          onClick={() => onChange(o.id)}
+          className={`cursor-pointer rounded-full border-2 border-ink px-3 py-1 text-sm font-bold ${
+            o.id === value ? "bg-grape text-white" : "bg-paper hover:bg-sun"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }

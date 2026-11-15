@@ -10,8 +10,8 @@ A colourful hub of mini-apps built together with a young coder — one game at a
 | --- | --- | --- |
 | **Hero & Monster ID Card Factory** | `/avatar-factory` | Name a character, pick an avatar style, get a collectible ID card with power, superpower, class, rarity (Common → Legendary with holo foil) and flip-side fun facts. Save cards to **My Squad**. |
 | **Secret Identity Detective** | `/secret-identity` | A hero hides behind a blurry dossier photo. Unlock 5 clues (500 → 100 pts), type a guess with autocomplete or tap from a shrinking suspect list (8 → 6 → 4 → 2). Categories: Famous, All, DC, Marvel, Other. |
-| **Ultimate Pokémon Pack Opener** | `/pack-opener` | Rip open booster packs, flip 5 cards, find holo foils. Duplicates become Poké-Coins (+10), packs cost 50. 10 free packs to start, +5 every 2 minutes. |
-| **Master Binder** | `/binder` | Every card pulled, set by set, with completion progress and locked `?` slots. |
+| **Ultimate Pokémon Pack Opener** | `/pack-opener` | Rip open booster packs from every era (~145 sets, by era tab), flip 5 cards, find holo foils. Duplicates become Poké-Coins (+10), packs cost 50. 10 free packs to start, +5 every 2 minutes. Special packs: **Energy Surge** and **Legends Only** (legendary & mythical Pokémon only, coins only, 100). |
+| **Master Binder** | `/binder` | Every card pulled, set by set, with completion progress, locked `?` slots and filters (collected/missing, rarity, legendary, holo, Pokémon/Trainer/Energy). |
 
 Everything a player collects — squads, detective scores, binders, coins — is saved in the browser's `localStorage`. There are no accounts and no server.
 

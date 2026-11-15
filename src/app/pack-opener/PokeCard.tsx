@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Gamepad2, Sparkles } from "lucide-react";
-import { setLogo } from "./data";
+import { ENERGY_PACK, LEGENDARY_PACK, type PackSet } from "./data";
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -146,6 +146,10 @@ export function FlipCard({
 }) {
   const [turning, setTurning] = useState(false);
   const [showFront, setShowFront] = useState(flipped);
+  // Face up and done turning. Only then does the card drop its 3D transform:
+  // leaving a face-up card in a 3D layer (with the holo tilt nested inside)
+  // made Firefox drop cards from the screen when you hovered over them.
+  const [settled, setSettled] = useState(flipped);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -168,11 +172,17 @@ export function FlipCard({
       <button
         type="button"
         onClick={onFlip}
+        onTransitionEnd={(e) => {
+          // The turn back from edge-on has finished (ignore the holo tilt's own transitions)
+          if (e.target === e.currentTarget && showFront && !turning) setSettled(true);
+        }}
         disabled={flipped}
         aria-label={flipped ? label : "Face-down card. Tap to flip!"}
-        className={`relative block w-full cursor-pointer rounded-xl transition-transform duration-200 ease-in-out [transform-style:preserve-3d] disabled:cursor-default ${
-          turning ? "[transform:rotateY(90deg)]" : "[transform:rotateY(0deg)]"
-        } ${showFront ? "" : "hover:-translate-y-2 hover:rotate-2"}`}
+        className={`relative block w-full cursor-pointer rounded-xl disabled:cursor-default ${
+          settled ? "" : "transition-transform duration-200 ease-in-out"
+        } ${turning ? "[transform:rotateY(90deg)]" : settled ? "" : "[transform:rotateY(0deg)]"} ${
+          showFront ? "" : "hover:-translate-y-2 hover:rotate-2"
+        }`}
       >
         {showFront ? front : <CardBack />}
       </button>
@@ -188,23 +198,65 @@ export function ShinyTag() {
   );
 }
 
-/** A set's logo — or, for the Energy pack, a row of energy symbols. */
+/** A set's logo — or, for our own packs, an emoji emblem. */
 export function SetLogo({
-  setId,
+  set,
   alt = "",
   className = "",
   large = false,
 }: {
-  setId: string;
+  set: PackSet;
   alt?: string;
   className?: string;
-  /** Bigger energy emblem for the big pack artwork */
+  /** Bigger emblem for the big pack artwork */
   large?: boolean;
 }) {
-  const src = setLogo(setId);
-  if (src) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} className={`w-full object-contain ${className}`} />;
+  // A few logos are missing on the image server: fall back to the set's name
+  const [brokenLogo, setBrokenLogo] = useState<string | null>(null);
+  if (set.logo && brokenLogo !== set.logo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={set.logo}
+        alt={alt}
+        loading="lazy"
+        onError={() => setBrokenLogo(set.logo)}
+        className={`w-full object-contain ${className}`}
+      />
+    );
+  }
+  if (set.id === LEGENDARY_PACK) {
+    return (
+      <span
+        role={alt ? "img" : undefined}
+        aria-label={alt || undefined}
+        className={`flex w-full flex-col items-center justify-center leading-none ${className}`}
+      >
+        <span className={`leading-none ${large ? "text-3xl" : "text-base"}`} aria-hidden>
+          ✨👑✨
+        </span>
+        <span
+          className={`font-display leading-none tracking-widest text-grape ${large ? "mt-1.5 text-lg" : "mt-1 text-[11px]"}`}
+          aria-hidden
+        >
+          LEGENDS
+        </span>
+      </span>
+    );
+  }
+  if (set.id !== ENERGY_PACK) {
+    // A few sets have no logo: show the name in big letters instead
+    return (
+      <span
+        role={alt ? "img" : undefined}
+        aria-label={alt || undefined}
+        className={`grid w-full place-items-center text-center font-display leading-tight text-grape ${
+          large ? "text-xl" : "text-xs"
+        } ${className}`}
+      >
+        <span aria-hidden>🎴 {set.name}</span>
+      </span>
+    );
   }
   return (
     <span

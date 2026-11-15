@@ -2,20 +2,25 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
-import { BookOpen, Coins, Gift, LoaderCircle, PackageOpen, RotateCcw, ShieldAlert, Wand2 } from "lucide-react";
+import { BookOpen, Coins, Crown, Gift, LoaderCircle, PackageOpen, RotateCcw, ShieldAlert, Wand2 } from "lucide-react";
 import {
+  ENERGY_SET,
+  FEATURED,
+  LEGENDARY_SET,
   PACKS_PER_REFILL,
   PACK_PRICE,
-  PACK_SETS,
   buildPack,
+  findSet,
   cardImage,
   isShiny,
   loadCard,
   loadSet,
   type CardDetail,
+  type PackSet,
 } from "./data";
 import { CardFace, FlipCard, SetLogo, ShinyTag, prefersReducedMotion } from "./PokeCard";
 import { freePacksNow } from "./PokeCollector";
+import SetPicker, { useCatalog } from "./SetPicker";
 import type { Collection, PullResult } from "./useCollection";
 
 type Phase = "select" | "loading" | "tearing" | "reveal";
@@ -29,7 +34,7 @@ export default function PackOpening({
 }: {
   collection: Collection;
   now: number;
-  payForPack: (how: "free" | "coins") => boolean;
+  payForPack: (how: "free" | "coins", price: number) => boolean;
   addPack: (setId: string, cards: CardDetail[]) => PullResult[];
 }) {
   const [setId, setSetId] = useState("sv03.5");
@@ -48,13 +53,17 @@ export default function PackOpening({
     shakeRef.current?.cancel();
   }, []);
 
+  useCatalog(); // re-render once the full set list arrives, so findSet sees it
+  const chosen = findSet(setId) ?? FEATURED[1];
+  const price = chosen.price ?? PACK_PRICE;
   const { available } = freePacksNow(collection, now);
-  const canBuy = collection.coins >= PACK_PRICE;
+  const canFree = !chosen.coinsOnly && available > 0;
+  const canBuy = collection.coins >= price;
   const busy = phase === "loading" || phase === "tearing";
 
   async function rip(how: "free" | "coins") {
     if (phase !== "select") return;
-    if (how === "free" ? available <= 0 : !canBuy) return;
+    if (how === "free" ? !canFree : !canBuy) return;
     setError(null);
     setPhase("loading");
     // Wiggle the pack while the cards load
@@ -81,7 +90,7 @@ export default function PackOpening({
       });
 
       // Only charge once the pack actually loaded
-      if (!payForPack(how)) throw new Error("Not enough packs or coins");
+      if (!payForPack(how, price)) throw new Error("Not enough packs or coins");
       const results = addPack(setId, cards);
       setPack({ setId, cards, results });
       setFlipped(cards.map(() => false));
@@ -149,7 +158,7 @@ export default function PackOpening({
           )}
         </div>
 
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {pack.cards.map((card, i) => (
             <RevealSlot
               key={`${card.id}-${i}`}
@@ -190,33 +199,18 @@ export default function PackOpening({
   }
 
   /* ---------------- Pack select ---------------- */
-  const chosen = PACK_SETS.find((s) => s.id === setId) ?? PACK_SETS[0];
   return (
     <section className="flex flex-col gap-6">
       <div>
         <h2 className="mb-3 font-display text-2xl">Choose a booster pack</h2>
-        <div role="radiogroup" aria-label="Booster pack" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {PACK_SETS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              role="radio"
-              aria-checked={s.id === setId}
-              disabled={busy}
-              onClick={() => setSetId(s.id)}
-              className={`chunky-sm pop-sm cursor-pointer rounded-2xl bg-gradient-to-br p-2 ${s.wrapper} ${
-                s.id === setId ? "ring-4 ring-ink ring-offset-2 ring-offset-paper" : "opacity-80"
-              }`}
-            >
-              <span className="grid h-16 place-items-center rounded-xl bg-white/90 p-2">
-                <SetLogo setId={s.id} className="h-12" />
-              </span>
-              <span className="mt-1 block font-display text-sm text-white [text-shadow:1px_1px_0_var(--color-ink)]">
-                {s.name}
-              </span>
-            </button>
-          ))}
-        </div>
+        <SetPicker
+          value={setId}
+          onChange={setSetId}
+          specials={[ENERGY_SET, LEGENDARY_SET]}
+          disabled={busy}
+          variant="pack"
+          label="Booster pack"
+        />
       </div>
 
       <div className="grid items-center gap-8 md:grid-cols-[auto_1fr]">
@@ -229,32 +223,50 @@ export default function PackOpening({
 
         <div className="flex flex-col gap-4">
           <p className="text-lg font-semibold">
-            Every pack has <strong>5 cards</strong>, including at least one rare. Holo cards shine
-            when you move over them! ✨
-          </p>
-
-          <button
-            type="button"
-            onClick={() => rip("free")}
-            disabled={busy || available <= 0}
-            className="chunky pop flex cursor-pointer items-center justify-center gap-3 rounded-2xl bg-tomato px-6 py-5 font-display text-2xl text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {phase === "loading" ? (
+            {chosen.id === LEGENDARY_SET.id ? (
               <>
-                <LoaderCircle className="size-7 animate-spin" /> Opening…
+                Every card is a <strong>legendary or mythical Pokémon</strong>, from any set — and
+                it goes into that set&apos;s page in your binder. 👑
               </>
             ) : (
               <>
-                <PackageOpen className="size-7" strokeWidth={2.5} /> Rip Open Pack!
+                Every pack has <strong>5 cards</strong>, including at least one rare. Holo cards shine
+                when you move over them! ✨
               </>
             )}
-          </button>
-          <p className="-mt-2 flex items-center gap-2 text-sm font-semibold text-ink/70">
-            <Gift className="size-4" />
-            {available > 0
-              ? `Uses 1 free pack (${available} left)`
-              : `No free packs right now — ${PACKS_PER_REFILL} more are on their way!`}
           </p>
+
+          {chosen.coinsOnly ? (
+            <p className="chunky-sm flex items-center gap-2 rounded-xl bg-white px-4 py-3 font-semibold">
+              <Crown className="size-5 shrink-0 text-grape" /> {chosen.name} packs can&apos;t be opened with free
+              packs — buy one with Poké-Coins!
+            </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => rip("free")}
+                disabled={busy || !canFree}
+                className="chunky pop flex cursor-pointer items-center justify-center gap-3 rounded-2xl bg-tomato px-6 py-5 font-display text-2xl text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {phase === "loading" ? (
+                  <>
+                    <LoaderCircle className="size-7 animate-spin" /> Opening…
+                  </>
+                ) : (
+                  <>
+                    <PackageOpen className="size-7" strokeWidth={2.5} /> Rip Open Pack!
+                  </>
+                )}
+              </button>
+              <p className="-mt-2 flex items-center gap-2 text-sm font-semibold text-ink/70">
+                <Gift className="size-4" />
+                {available > 0
+                  ? `Uses 1 free pack (${available} left)`
+                  : `No free packs right now — ${PACKS_PER_REFILL} more are on their way!`}
+              </p>
+            </>
+          )}
 
           <button
             type="button"
@@ -262,12 +274,24 @@ export default function PackOpening({
             disabled={busy || !canBuy}
             className="chunky pop flex cursor-pointer items-center justify-center gap-3 rounded-2xl bg-sun px-6 py-4 font-display text-lg disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Coins className="size-6" strokeWidth={2.5} /> Buy a Pack — {PACK_PRICE} 🪙
+            {phase === "loading" && chosen.coinsOnly ? (
+              <>
+                <LoaderCircle className="size-6 animate-spin" /> Opening…
+              </>
+            ) : (
+              <>
+                <Coins className="size-6" strokeWidth={2.5} /> Buy a Pack — {price} 🪙
+              </>
+            )}
           </button>
           <p className="-mt-2 text-sm font-semibold text-ink/70">
             {canBuy
-              ? "Skip the wait and rip one right now!"
-              : `Duplicates turn into Poké-Coins. Save up ${PACK_PRICE} to buy a pack!`}
+              ? chosen.coinsOnly
+                ? "You've saved up enough — rip one now!"
+                : "Skip the wait and rip one right now!"
+              : `Duplicates turn into Poké-Coins. Save up ${price} to buy ${
+                  chosen.coinsOnly ? `a ${chosen.name} pack` : "a pack"
+                }! (You have ${collection.coins}.)`}
           </p>
 
           {error && (
@@ -286,7 +310,7 @@ function PackArt({
   set,
   topRef,
 }: {
-  set: (typeof PACK_SETS)[number];
+  set: PackSet;
   topRef: RefObject<HTMLDivElement | null>;
 }) {
   const crimp = {
@@ -318,11 +342,11 @@ function PackArt({
           }}
         />
         <span className="relative grid h-24 w-full place-items-center rounded-2xl border-[3px] border-ink bg-white p-3">
-          <SetLogo setId={set.id} alt={`${set.name} logo`} className="h-[4.5rem]" large />
+          <SetLogo set={set} alt={`${set.name} logo`} className="h-[4.5rem]" large />
         </span>
         <div className="relative text-center text-white [text-shadow:2px_2px_0_var(--color-ink)]">
           <p className="font-display text-2xl leading-tight">{set.name}</p>
-          <p className="font-display text-xs tracking-widest">BOOSTER PACK · {set.year}</p>
+          <p className="font-display text-xs tracking-widest">BOOSTER PACK · {set.subtitle}</p>
         </div>
         <span className="relative rounded-full border-[3px] border-ink bg-sun px-4 py-1 font-display text-sm">
           5 CARDS

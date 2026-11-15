@@ -7,6 +7,7 @@ import {
   MAX_FREE_PACKS,
   PACKS_PER_REFILL,
   PACK_PRICE,
+  ENERGY_PACK,
   isShiny,
   type CardDetail,
 } from "./data";
@@ -99,7 +100,14 @@ function readRaw(): string {
 
 function parse(raw: string): Collection {
   try {
-    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
+    if (!raw) return EMPTY;
+    const c: Collection = { ...EMPTY, ...JSON.parse(raw) };
+    // Early Legends Only pulls were filed under "legendary" — move them to their own set
+    for (const [id, card] of Object.entries(c.cards)) {
+      if (card.setId === "legendary") card.setId = id.slice(0, id.lastIndexOf("-"));
+    }
+    if (c.lastSet === "legendary") c.lastSet = null;
+    return c;
   } catch {
     return EMPTY;
   }
@@ -127,7 +135,7 @@ export function useCollection() {
    * Pay for a pack (free pack first, otherwise coins). Returns false if the
    * player can't afford it. Always reads the latest saved state.
    */
-  const payForPack = useCallback((how: "free" | "coins"): boolean => {
+  const payForPack = useCallback((how: "free" | "coins", price: number = PACK_PRICE): boolean => {
     const now = Date.now();
     const c = settle(parse(readRaw()), now);
     if (how === "free") {
@@ -139,8 +147,8 @@ export function useCollection() {
       });
       return true;
     }
-    if (c.coins < PACK_PRICE) return false;
-    write({ ...c, coins: c.coins - PACK_PRICE });
+    if (c.coins < price) return false;
+    write({ ...c, coins: c.coins - price });
     return true;
   }, []);
 
@@ -148,7 +156,7 @@ export function useCollection() {
    * Put a pack's cards in the binder. Duplicates (already owned, or twice in
    * the same pack) become Poké-Coins.
    */
-  const addPack = useCallback((setId: string, cards: CardDetail[]): PullResult[] => {
+  const addPack = useCallback((packId: string, cards: CardDetail[]): PullResult[] => {
     const c = parse(readRaw());
     const owned = { ...c.cards };
     let coins = c.coins;
@@ -163,14 +171,15 @@ export function useCollection() {
         count: 1,
         name: card.name,
         image: card.image,
-        setId,
+        // Cards go into their own set's binder page (Energy Surge energies keep their own page)
+        setId: packId === ENERGY_PACK ? packId : card.setId,
         rarity: card.rarity,
         shiny: isShiny(card),
         isEnergy: card.category === "Energy",
       };
       return { id: card.id, isNew: true, coins: 0 };
     });
-    write({ ...c, cards: owned, coins, packsOpened: c.packsOpened + 1, lastSet: setId });
+    write({ ...c, cards: owned, coins, packsOpened: c.packsOpened + 1, lastSet: packId === ENERGY_PACK ? packId : (cards.at(-1)?.setId ?? packId) });
     return results;
   }, []);
 
