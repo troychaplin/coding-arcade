@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bungee, Fredoka } from "next/font/google";
+import { Bangers, Bungee, Creepster, Fredoka, Monoton, Russo_One } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
 
@@ -14,6 +14,13 @@ const fredoka = Fredoka({
   subsets: ["latin"],
 });
 
+// Each game's theme font (see themes.css). Not preloaded: a page only
+// downloads the one its theme uses.
+const russo = Russo_One({ variable: "--font-russo", weight: "400", subsets: ["latin"], preload: false });
+const bangers = Bangers({ variable: "--font-bangers", weight: "400", subsets: ["latin"], preload: false });
+const monoton = Monoton({ variable: "--font-monoton", weight: "400", subsets: ["latin"], preload: false });
+const creepster = Creepster({ variable: "--font-creepster", weight: "400", subsets: ["latin"], preload: false });
+
 export const metadata: Metadata = {
   title: {
     default: "Kid's Coding Arcade",
@@ -26,14 +33,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bungee.variable} ${fredoka.variable} h-full antialiased`}
+      className={`${bungee.variable} ${fredoka.variable} ${russo.variable} ${bangers.variable} ${creepster.variable} ${monoton.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <NavBar />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-8 sm:px-6">
           {children}
         </main>
-        <footer className="border-t-[3px] border-ink bg-ink py-4 text-center text-sm font-medium text-paper">
+        <footer className="site-footer py-4 text-center text-sm font-medium">
           Built with code, snacks &amp; big ideas 🕹️
         </footer>
       </body>

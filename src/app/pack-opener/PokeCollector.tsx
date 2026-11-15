@@ -27,7 +27,7 @@ export function freePacksNow(c: Collection, now: number) {
   return now ? freePacksAt(c, now) : { available: c.freePacks, nextAt: null };
 }
 
-/** The big page title changes with the section you're in */
+/** The jumbotron title (and its team colour) changes with the section you're in */
 const HEADINGS = {
   packs: {
     top: "Ultimate Pokémon",
@@ -43,11 +43,6 @@ const HEADINGS = {
   },
 } as const;
 
-const halftone = (color: string) => ({
-  backgroundImage: `radial-gradient(${color} 1.4px, transparent 1.6px)`,
-  backgroundSize: "12px 12px",
-});
-
 export default function PokeCollector({ tab }: { tab: "packs" | "binder" }) {
   const { collection, payForPack, addPack } = useCollection();
   const now = useNow();
@@ -55,22 +50,39 @@ export default function PokeCollector({ tab }: { tab: "packs" | "binder" }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header
-        className={`chunky relative overflow-hidden rounded-3xl px-6 py-8 text-center text-white sm:py-10 ${
-          heading.color
-        }`}
-        style={halftone("rgb(255 210 63 / 0.45)")}
-      >
-        <p className="chunky-sm mb-3 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-bold text-ink">
-          <Sparkles className="size-4 text-tangerine" /> Mini-App #3
-        </p>
-        <h1 className="font-display text-3xl leading-tight [text-shadow:3px_3px_0_var(--color-ink)] sm:text-5xl">
-          {heading.top}
-          <span className="block text-sun">{heading.main}</span>
-        </h1>
-        <p className="mt-2 font-display text-lg text-white/90 [text-shadow:2px_2px_0_var(--color-ink)]">
-          {heading.sub}
-        </p>
+      {/* The stadium jumbotron */}
+      <header className="chunky relative overflow-hidden rounded-3xl bg-[linear-gradient(#2c4277,#0f1b3d)] px-3 pb-3 pt-2 text-center sm:px-4 sm:pb-4">
+        <div aria-hidden className="mb-2 flex justify-center gap-2">
+          {Array.from({ length: 7 }, (_, i) => (
+            <span key={i} className="size-2.5 rounded-full bg-[#fff7d1] shadow-[0_0_8px_2px_rgb(255_240_180/0.8)]" />
+          ))}
+        </div>
+        <div
+          className="relative overflow-hidden rounded-2xl border-[3px] border-[#050a1e] bg-[#081128] px-8 py-7 sm:py-9"
+          style={{
+            backgroundImage: "radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1.3px)",
+            backgroundSize: "6px 6px",
+          }}
+        >
+          {/* Team colours down each side of the screen */}
+          <span aria-hidden className={`absolute inset-y-0 left-0 w-3 ${heading.color}`} />
+          <span aria-hidden className="absolute inset-y-0 right-0 w-3 bg-sky" />
+          <p className="mb-3 inline-flex items-center gap-2 rounded-full border-2 border-sun/70 px-3 py-0.5 text-sm font-bold text-sun">
+            <Sparkles className="size-4" /> Mini-App #3
+          </p>
+          <h1 className="font-display text-3xl leading-tight text-white sm:text-5xl">
+            {heading.top}
+            <span className="block text-sun [text-shadow:0_0_14px_rgb(255_201_40/0.75),0_3px_0_#7a5600]">
+              {heading.main}
+            </span>
+          </h1>
+          <p className="mt-3 font-display text-base text-[#9fc3ff] sm:text-lg">{heading.sub}</p>
+          {/* Glare across the glass */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,rgb(255_255_255/0.13)_0%,rgb(255_255_255/0.03)_38%,transparent_38%)]"
+          />
+        </div>
       </header>
 
       <Wallet collection={collection} now={now} />

@@ -7,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function BinderPage() {
-  return <PokeCollector tab="binder" />;
+  return (
+    <div data-theme="arena" className="contents">
+      <PokeCollector tab="binder" />
+    </div>
+  );
 }

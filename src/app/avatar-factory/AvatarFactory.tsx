@@ -3,6 +3,8 @@
 import { useState } from "react";
 import {
   Check,
+  FlaskConical,
+  FlaskRound,
   RotateCcw,
   Save,
   Shuffle,
@@ -10,6 +12,7 @@ import {
   Trash2,
   Users,
   X,
+  Zap,
 } from "lucide-react";
 import IdCard from "./IdCard";
 import { useSquad } from "./useSquad";
@@ -71,17 +74,43 @@ export default function AvatarFactory() {
 
   return (
     <div className="flex flex-col gap-12">
-      {/* Title */}
-      <header className="text-center">
-        <p className="chunky-sm mb-3 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-bold">
-          <Sparkles className="size-4 text-grape" /> Mini-App #1
+      {/* Title: the iron sign bolted over the lab door */}
+      <header
+        className="chunky relative overflow-hidden rounded-3xl bg-[#101b15] px-6 py-9 text-center sm:py-11"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 18px 18px, #d6a041 0 4px, transparent 5px), radial-gradient(circle at calc(100% - 18px) 18px, #d6a041 0 4px, transparent 5px), radial-gradient(circle at 18px calc(100% - 18px), #d6a041 0 4px, transparent 5px), radial-gradient(circle at calc(100% - 18px) calc(100% - 18px), #d6a041 0 4px, transparent 5px), radial-gradient(ellipse 60% 80% at 50% 120%, rgb(77 255 106 / 0.28), transparent 70%)",
+        }}
+      >
+        {/* Glassware bubbling on the bench, and a spark from the coil */}
+        <FlaskConical
+          aria-hidden
+          className="pointer-events-none absolute bottom-4 left-6 hidden size-20 -rotate-6 text-lime drop-shadow-[0_0_14px_rgb(77_255_106/0.8)] sm:block"
+          strokeWidth={1.5}
+        />
+        <FlaskRound
+          aria-hidden
+          className="pointer-events-none absolute bottom-5 left-24 hidden size-12 text-sky drop-shadow-[0_0_12px_rgb(61_227_207/0.8)] sm:block"
+          strokeWidth={1.5}
+        />
+        <Zap
+          aria-hidden
+          className="pointer-events-none absolute right-8 top-6 hidden size-16 rotate-12 fill-grape/40 text-grape drop-shadow-[0_0_14px_rgb(154_92_255/0.9)] sm:block"
+          strokeWidth={1.5}
+        />
+        <p className="relative mb-4 inline-flex items-center gap-2 rounded-full border-2 border-tangerine/70 px-3 py-1 text-sm font-bold text-tangerine">
+          <Sparkles className="size-4" /> Mini-App #1
         </p>
-        <h1 className="font-display text-3xl leading-tight sm:text-5xl">
-          The Hero &amp; Monster
-          <span className="block text-tomato [text-shadow:3px_3px_0_var(--color-ink)]">
+        <h1 className="relative font-display text-4xl leading-tight tracking-wide sm:text-6xl">
+          <span className="block text-[#d9f5dc]">The Hero &amp; Monster</span>
+          <span className="block text-lime [text-shadow:0_0_12px_rgb(77_255_106/0.8),0_0_32px_rgb(77_255_106/0.5)]">
             ID Card Factory
           </span>
         </h1>
+        <p className="relative mx-auto mt-4 max-w-md font-semibold text-[#a9cdb0]">
+          Stitch together a hero or monster, give it a name, then flip the switch and bring
+          its card to life.
+        </p>
       </header>
 
       {/* Builder + preview */}
@@ -191,7 +220,7 @@ export default function AvatarFactory() {
 
         {/* Live preview */}
         <div className="flex min-w-0 flex-col items-center gap-3 lg:sticky lg:top-24 lg:w-[22rem]">
-          <p className="font-display text-sm uppercase tracking-wider text-ink/60">
+          <p className="font-display text-sm uppercase tracking-wider opacity-70">
             Live preview
           </p>
           <div key={popKey} className="flex w-full justify-center animate-card-in">

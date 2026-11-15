@@ -7,6 +7,8 @@ export type Project = {
   icon: LucideIcon;
   /** Tailwind background class for the card's banner */
   color: string;
+  /** Neon tube colour for its cabinet on the arcade floor */
+  neon: string;
   /** Route for live projects; omit for "coming soon" */
   href?: string;
 };
@@ -19,6 +21,7 @@ export const projects: Project[] = [
       "Invent a character, roll their stats, and build your very own squad of collectible ID cards.",
     icon: Factory,
     color: "bg-bubble",
+    neon: "#5dff8a",
     href: "/avatar-factory",
   },
   {
@@ -27,6 +30,7 @@ export const projects: Project[] = [
       "A mystery hero from Marvel, DC, Star Wars and more is hiding behind a blurry photo. Unlock clues and crack the case!",
     icon: VenetianMask,
     color: "bg-sun",
+    neon: "#ffb547",
     href: "/secret-identity",
   },
   {
@@ -35,6 +39,7 @@ export const projects: Project[] = [
       "Rip open booster packs, flip your cards, hunt for shiny holos and fill your Master Binder!",
     icon: PackageOpen,
     color: "bg-tomato",
+    neon: "#34e7ff",
     href: "/pack-opener",
   },
 ];

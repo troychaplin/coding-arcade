@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AvatarFactoryPage() {
-  return <AvatarFactory />;
+  return (
+    <div data-theme="lab" className="contents">
+      <AvatarFactory />
+    </div>
+  );
 }

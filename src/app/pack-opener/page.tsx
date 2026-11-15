@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function PackOpenerPage() {
-  return <PokeCollector tab="packs" />;
+  return (
+    <div data-theme="arena" className="contents">
+      <PokeCollector tab="packs" />
+    </div>
+  );
 }

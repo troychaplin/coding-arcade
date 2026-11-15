@@ -1,47 +1,39 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRight, Lock, Sparkles } from "lucide-react";
+import { Lock } from "lucide-react";
 import { projects, type Project } from "@/lib/projects";
 
 export default function Home() {
   const liveCount = projects.filter((p) => p.href).length;
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="chunky relative overflow-hidden rounded-3xl bg-grape px-6 py-10 text-white sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -right-10 -top-10 size-48 rounded-full border-[3px] border-ink bg-sun" />
-        <div className="pointer-events-none absolute -bottom-12 right-24 size-28 rounded-full border-[3px] border-ink bg-tomato" />
+    <div data-theme="arcade" className="flex flex-col gap-14 pt-4">
+      {/* The neon sign over the door */}
+      <header className="flex flex-col items-center text-center">
+        <p className="font-display text-sm tracking-[0.3em] text-[#34e7ff] [text-shadow:0_0_6px_#34e7ff,0_0_18px_#34e7ff] sm:text-base">
+          Kid&apos;s
+        </p>
+        <h1 className="neon-sign mt-1 font-[family-name:var(--font-monoton)] text-5xl leading-none text-[#ffd6f6] sm:text-7xl lg:text-8xl">
+          Coding Arcade
+        </h1>
+        <p className="mt-6 max-w-md text-lg font-medium text-[#d8c9ff]">
+          Every machine here is a game we built together. Pick one and press start.
+        </p>
+        <p className="mt-5 inline-flex items-center gap-3 rounded-full border-2 border-[#5dff8a] bg-[#05170c] px-4 py-1.5 font-display text-sm text-[#5dff8a] shadow-[0_0_14px_rgb(93_255_138/0.45)]">
+          <span className="size-2.5 animate-pulse rounded-full bg-[#5dff8a] shadow-[0_0_8px_#5dff8a]" aria-hidden />
+          {liveCount} {liveCount === 1 ? "machine" : "machines"} ready to play
+        </p>
+      </header>
 
-        <div className="relative max-w-2xl">
-          <p className="chunky-sm mb-4 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-semibold text-ink">
-            <Sparkles className="size-4 animate-wiggle text-tangerine" />
-            Insert coin to play
-          </p>
-          <h1 className="font-display text-4xl leading-tight [text-shadow:4px_4px_0_var(--color-ink)] sm:text-6xl">
-            Kid&apos;s Coding Arcade
-          </h1>
-          <p className="mt-4 max-w-xl text-lg font-medium sm:text-xl">
-            Every machine here is a mini-app we built together. Pick one and
-            press start!
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-ink">
-            <span className="chunky-sm rounded-lg bg-lime px-3 py-1">
-              {liveCount} playable
-            </span>
-            {projects.length > liveCount && (
-              <span className="chunky-sm rounded-lg bg-sun px-3 py-1">
-                {projects.length - liveCount} coming soon
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-5 font-display text-2xl sm:text-3xl">Pick a game</h2>
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* The arcade floor */}
+      <section aria-labelledby="floor">
+        <h2 id="floor" className="sr-only">
+          Games
+        </h2>
+        <ul className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <li key={project.title} className="flex">
-              <ProjectCard project={project} />
+              <Cabinet project={project} />
             </li>
           ))}
         </ul>
@@ -50,41 +42,61 @@ export default function Home() {
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
+/** One arcade cabinet: a lit marquee, a screen and a control deck. */
+function Cabinet({ project }: { project: Project }) {
   const Icon = project.icon;
   const live = Boolean(project.href);
+  const neon = { "--neon": project.neon } as CSSProperties;
 
   const body = (
     <>
-      <div
-        className={`${project.color} relative grid h-36 place-items-center border-b-[3px] border-ink`}
-      >
-        <span className="chunky-sm grid size-20 place-items-center rounded-2xl bg-white transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-110">
-          <Icon className="size-10" strokeWidth={2.25} />
-        </span>
-        <span
-          className={`chunky-sm absolute right-3 top-3 rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wide ${
-            live ? "bg-lime" : "bg-white"
-          }`}
-        >
-          {live ? "Play now" : "Coming soon"}
-        </span>
+      {/* Marquee */}
+      <div className="relative rounded-t-[1.75rem] border-[3px] border-b-0 border-[var(--neon)] bg-[#12062e] px-4 py-4 text-center shadow-[0_0_22px_color-mix(in_srgb,var(--neon)_55%,transparent),inset_0_0_18px_color-mix(in_srgb,var(--neon)_35%,transparent)]">
+        <h3 className="font-display text-lg leading-snug text-white [text-shadow:0_0_6px_var(--neon),0_0_16px_var(--neon)]">
+          {project.title}
+        </h3>
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-5">
-        <h3 className="font-display text-lg leading-snug">{project.title}</h3>
-        <p className="flex-1 font-medium text-ink/75">{project.blurb}</p>
+
+      {/* Screen inside the bezel */}
+      <div className="flex flex-1 flex-col bg-[#1d0d45] px-4 pb-4 pt-3">
+        <div className="relative flex flex-1 flex-col items-center gap-4 overflow-hidden rounded-2xl border-4 border-[#05010f] bg-[radial-gradient(ellipse_at_center,#123236,#050b14_75%)] px-5 py-6 text-center transition-[filter] duration-200 group-hover:brightness-125">
+          <Icon
+            className="size-14 text-[var(--neon)] drop-shadow-[0_0_10px_var(--neon)]"
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <p className="font-medium leading-snug text-[#cfe9ea]">{project.blurb}</p>
+          {!live && (
+            <p className="rotate-[-4deg] rounded border-2 border-[#ff3d71] px-2 font-display text-sm text-[#ff3d71]">
+              Out of order
+            </p>
+          )}
+          {/* Scanlines on the glass */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(rgb(255_255_255/0.04)_0_1px,transparent_1px_3px)]"
+          />
+        </div>
+      </div>
+
+      {/* Control deck */}
+      <div className="flex items-center justify-between gap-3 rounded-b-xl border-t-4 border-[#05010f] bg-[#2b1466] px-5 py-3">
+        <span aria-hidden className="flex items-end gap-1.5">
+          <span className="block h-5 w-1.5 rounded-full bg-[#9a8bc7]" />
+          <span className="-ml-[0.6rem] -mt-1 block size-4 rounded-full bg-[#ff3d71] shadow-[inset_-2px_-2px_0_rgb(0_0_0/0.3)]" />
+        </span>
         <span
-          className={`mt-2 inline-flex items-center gap-2 self-start rounded-full px-4 py-1.5 text-sm font-bold ${
-            live ? "chunky-sm bg-tomato text-white" : "bg-ink/10 text-ink/60"
+          className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-display text-sm ${
+            live
+              ? "bg-[var(--neon)] text-[#12062e] shadow-[0_0_16px_var(--neon)] transition-transform group-hover:scale-105 group-active:scale-95"
+              : "bg-[#3d2a72] text-[#a596d4]"
           }`}
         >
           {live ? (
-            <>
-              Start <ArrowRight className="size-4" strokeWidth={3} />
-            </>
+            "Press start"
           ) : (
             <>
-              <Lock className="size-4" strokeWidth={2.5} /> Locked
+              <Lock className="size-4" strokeWidth={2.5} aria-hidden /> Coming soon
             </>
           )}
         </span>
@@ -92,19 +104,22 @@ function ProjectCard({ project }: { project: Project }) {
     </>
   );
 
-  const base =
-    "chunky group flex w-full flex-col overflow-hidden rounded-3xl bg-white";
+  const base = "group flex w-full flex-col";
 
   if (project.href) {
     return (
-      <Link href={project.href} className={`${base} pop`}>
+      <Link
+        href={project.href}
+        style={neon}
+        className={`${base} rounded-[1.75rem] transition-transform duration-200 hover:-translate-y-1 focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--neon)]`}
+      >
         {body}
       </Link>
     );
   }
 
   return (
-    <div className={`${base} opacity-80 saturate-50`} aria-disabled="true">
+    <div style={neon} className={`${base} opacity-70 saturate-50`} aria-disabled="true">
       {body}
     </div>
   );

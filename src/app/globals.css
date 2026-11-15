@@ -1,40 +1,77 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-display: var(--font-bungee);
+  --font-display: var(--t-font-display);
   --font-sans: var(--font-fredoka);
 
-  --color-ink: #16121f;
-  --color-paper: #fff8e7;
-  --color-sun: #ffd23f;
-  --color-tomato: #ff4f5e;
-  --color-bubble: #ff7ac6;
-  --color-grape: #8b5cf6;
-  --color-sky: #3bb9ff;
-  --color-lime: #7ee04f;
-  --color-tangerine: #ff9f1c;
+  /* Every colour points at a theme variable, so each game can repaint the
+     shared components (see "Themes" below) */
+  --color-ink: var(--t-ink);
+  --color-paper: var(--t-paper);
+  --color-white: var(--t-white);
+  --color-sun: var(--t-sun);
+  --color-tomato: var(--t-tomato);
+  --color-bubble: var(--t-bubble);
+  --color-grape: var(--t-grape);
+  --color-sky: var(--t-sky);
+  --color-lime: var(--t-lime);
+  --color-tangerine: var(--t-tangerine);
+}
+
+/* ---------------------------------------------------------------------------
+ * Default theme: the toy box
+ * ------------------------------------------------------------------------- */
+:root {
+  --t-font-display: var(--font-bungee);
+  --t-ink: #16121f;
+  --t-paper: #fff8e7;
+  --t-white: #ffffff;
+  --t-sun: #ffd23f;
+  --t-tomato: #ff4f5e;
+  --t-bubble: #ff7ac6;
+  --t-grape: #8b5cf6;
+  --t-sky: #3bb9ff;
+  --t-lime: #7ee04f;
+  --t-tangerine: #ff9f1c;
+
+  /* Text straight on the page backdrop (light themes: the same as ink) */
+  --t-text: var(--t-ink);
+  /* Surfaces: border colour and shadows for chunky panels and buttons */
+  --t-edge: var(--t-ink);
+  --t-shadow: 6px 6px 0 0 var(--t-ink);
+  --t-shadow-sm: 3px 3px 0 0 var(--t-ink);
+  --t-shadow-hover: 8px 8px 0 0 var(--t-ink);
+  --t-shadow-sm-hover: 4px 4px 0 0 var(--t-ink);
+  --t-shadow-press: 0 0 0 0 var(--t-ink);
+  /* Site chrome */
+  --t-nav-bg: var(--t-sun);
+  --t-nav-fg: var(--t-ink);
+  --t-nav-edge: var(--t-ink);
+  --t-nav-glow: none;
+  --t-footer-bg: var(--t-ink);
+  --t-footer-fg: var(--t-paper);
 }
 
 body {
-  background-color: var(--color-paper);
+  background-color: var(--t-paper);
   background-image: radial-gradient(
     color-mix(in srgb, var(--color-ink) 14%, transparent) 1.5px,
     transparent 1.5px
   );
   background-size: 22px 22px;
-  color: var(--color-ink);
+  color: var(--t-text);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-/* Chunky toy-box surfaces: thick ink border + hard offset shadow */
+/* Chunky surfaces: thick border + hard offset shadow (each theme restyles them) */
 @utility chunky {
-  border: 3px solid var(--color-ink);
-  box-shadow: 6px 6px 0 0 var(--color-ink);
+  border: 3px solid var(--t-edge);
+  box-shadow: var(--t-shadow);
 }
 
 @utility chunky-sm {
-  border: 3px solid var(--color-ink);
-  box-shadow: 3px 3px 0 0 var(--color-ink);
+  border: 3px solid var(--t-edge);
+  box-shadow: var(--t-shadow-sm);
 }
 
 /* Snappy press-down interaction for anything clickable */
@@ -44,11 +81,11 @@ body {
     box-shadow 120ms ease;
   &:hover:not(:disabled) {
     transform: translate(-2px, -2px) rotate(-0.6deg);
-    box-shadow: 8px 8px 0 0 var(--color-ink);
+    box-shadow: var(--t-shadow-hover);
   }
   &:active:not(:disabled) {
     transform: translate(4px, 4px);
-    box-shadow: 0 0 0 0 var(--color-ink);
+    box-shadow: var(--t-shadow-press);
   }
 }
 
@@ -58,12 +95,25 @@ body {
     box-shadow 120ms ease;
   &:hover:not(:disabled) {
     transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 0 var(--color-ink);
+    box-shadow: var(--t-shadow-sm-hover);
   }
   &:active:not(:disabled) {
     transform: translate(3px, 3px);
-    box-shadow: 0 0 0 0 var(--color-ink);
+    box-shadow: var(--t-shadow-press);
   }
+}
+
+@utility site-nav {
+  background: var(--t-nav-bg);
+  color: var(--t-nav-fg);
+  border-bottom: 3px solid var(--t-nav-edge);
+  box-shadow: var(--t-nav-glow);
+}
+
+@utility site-footer {
+  background: var(--t-footer-bg);
+  color: var(--t-footer-fg);
+  border-top: 3px solid var(--t-nav-edge);
 }
 
 @keyframes card-in {
@@ -161,4 +211,345 @@ body {
 
 @utility animate-sparkle {
   animation: sparkle 1.2s ease-in-out infinite;
+}
+
+/* ===========================================================================
+ * THEMES
+ * =========================================================================== */
+
+/*
+ * Themes — one per game. A page opts in by wrapping its content in
+ * <div data-theme="…" className="contents">. The variables land on <html>,
+ * so the nav bar, footer and backdrop change with the page.
+ *
+ *   arcade  the hub: a neon arcade at night
+ *   arena   Pokémon: a bright battle stadium with a glossy floor
+ *   noir    Secret Identity: a rainy city at night, case files under a searchlight
+ *   lab     ID Card Factory: a mad scientist's dungeon lab, lightning and green glow
+ */
+
+/* ---------------------------------------------------------------------------
+ * Dark backdrops: text on the page is light, but text on a light panel or a
+ * coloured button stays ink. (In the base layer, so any text-* utility still
+ * wins, but specific enough to beat the reset's `a { color: inherit }`.)
+ * ------------------------------------------------------------------------- */
+@layer base {
+  :where(html:has([data-theme="arcade"], [data-theme="noir"], [data-theme="lab"]))
+    [class*="bg-"]:not([class*="bg-ink"], [class*="bg-gradient"], [class*="bg-transparent"], [class*="bg-["]) {
+    color: var(--t-ink);
+  }
+}
+
+/* Scenery layers sit behind everything */
+html:has([data-theme]) body::before,
+html:has([data-theme]) body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+}
+
+/* ===========================================================================
+ * ARCADE — neon tubes, a glowing grid floor, CRT scanlines
+ * ======================================================================== */
+html:has([data-theme="arcade"]) {
+  --t-font-display: var(--font-bungee);
+  --t-ink: #1a0b3b;
+  --t-paper: #f4ecff;
+  --t-white: #ffffff;
+  --t-sun: #ffe94d;
+  --t-tomato: #ff3d71;
+  --t-bubble: #ff4fd8;
+  --t-grape: #9d5cff;
+  --t-sky: #34e7ff;
+  --t-lime: #5dff8a;
+  --t-tangerine: #ffa53d;
+  --t-text: #f1e9ff;
+  --t-edge: #34e7ff;
+  --t-shadow: 0 0 0 1px #34e7ff, 0 0 22px rgb(52 231 255 / 0.45);
+  --t-shadow-sm: 0 0 12px rgb(52 231 255 / 0.4);
+  --t-shadow-hover: 0 0 0 2px #34e7ff, 0 0 34px rgb(52 231 255 / 0.7);
+  --t-shadow-sm-hover: 0 0 18px rgb(52 231 255 / 0.7);
+  --t-shadow-press: 0 0 6px rgb(52 231 255 / 0.5);
+  --t-nav-bg: rgb(16 5 40 / 0.88);
+  --t-nav-fg: #f1e9ff;
+  --t-nav-edge: #ff4fd8;
+  --t-nav-glow: 0 0 24px rgb(255 79 216 / 0.55);
+  --t-footer-bg: #0b0320;
+  --t-footer-fg: #b9a6e8;
+}
+
+html:has([data-theme="arcade"]) body {
+  background-color: #0d0524;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgb(255 79 216 / 0.35), transparent 70%),
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 33% 9%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 76% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 30%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 22% 36%, #fff, transparent),
+    linear-gradient(#0d0524 0%, #1c0a4a 55%, #2a0b52 100%);
+  background-size: auto;
+  background-attachment: fixed;
+}
+
+/* The grid floor, running off to the horizon */
+html:has([data-theme="arcade"]) body::before {
+  inset: auto -50% 0;
+  height: 48vh;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgb(255 79 216 / 0.85) 2px, transparent 2px),
+    linear-gradient(90deg, rgb(52 231 255 / 0.6) 2px, transparent 2px);
+  background-size: 64px 64px;
+  transform: perspective(320px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(transparent, #000 45%);
+}
+
+/* CRT scanlines over the whole screen */
+html:has([data-theme="arcade"]) body::after {
+  inset: 0;
+  z-index: 100;
+  background: repeating-linear-gradient(rgb(0 0 0 / 0.07) 0 1px, transparent 1px 4px);
+}
+
+/* ===========================================================================
+ * ARENA — daytime battle stadium: floodlights, stands, a glossy pitch
+ * ======================================================================== */
+html:has([data-theme="arena"]) {
+  --t-font-display: var(--font-russo);
+  --t-ink: #0f1b3d;
+  --t-paper: #eef4ff;
+  --t-white: #ffffff;
+  --t-sun: #ffc928;
+  --t-tomato: #e8283c;
+  --t-bubble: #ff5fa2;
+  --t-grape: #5a43e0;
+  --t-sky: #1f8bff;
+  --t-lime: #34c759;
+  --t-tangerine: #ff8a1f;
+  --t-text: #0f1b3d;
+  --t-edge: #0f1b3d;
+  /* Polished plastic: a lip underneath, a soft drop shadow, a bright top edge */
+  --t-shadow:
+    inset 0 3px 0 rgb(255 255 255 / 0.65), inset 0 -4px 0 rgb(15 27 61 / 0.14),
+    0 6px 0 #0f1b3d, 0 16px 24px -10px rgb(15 27 61 / 0.55);
+  --t-shadow-sm:
+    inset 0 2px 0 rgb(255 255 255 / 0.6), inset 0 -3px 0 rgb(15 27 61 / 0.14), 0 3px 0 #0f1b3d;
+  --t-shadow-hover:
+    inset 0 3px 0 rgb(255 255 255 / 0.65), inset 0 -4px 0 rgb(15 27 61 / 0.14),
+    0 9px 0 #0f1b3d, 0 22px 28px -10px rgb(15 27 61 / 0.6);
+  --t-shadow-sm-hover:
+    inset 0 2px 0 rgb(255 255 255 / 0.6), inset 0 -3px 0 rgb(15 27 61 / 0.14), 0 5px 0 #0f1b3d;
+  --t-shadow-press: inset 0 3px 6px rgb(15 27 61 / 0.3), 0 0 0 #0f1b3d;
+  --t-nav-bg: linear-gradient(#24386a, #0f1b3d);
+  --t-nav-fg: #ffffff;
+  --t-nav-edge: #ffc928;
+  --t-nav-glow: 0 6px 18px rgb(15 27 61 / 0.35);
+  --t-footer-bg: #0f1b3d;
+  --t-footer-fg: #c9d6f5;
+}
+
+html:has([data-theme="arena"]) body {
+  background: #6cc24a;
+}
+
+/* Sky, floodlights and the stands (top of the screen) */
+html:has([data-theme="arena"]) body::before {
+  inset: 0 0 auto;
+  height: 46vh;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 8% 10%, rgb(255 255 255 / 0.95) 0 1.4%, rgb(255 250 220 / 0.55) 5%, transparent 22%),
+    radial-gradient(circle at 92% 10%, rgb(255 255 255 / 0.95) 0 1.4%, rgb(255 250 220 / 0.55) 5%, transparent 22%),
+    linear-gradient(#5db8ff 0%, #b8e3ff 60%, transparent 60%),
+    linear-gradient(transparent 94%, #0f1b3d 94% 97%, #ffc928 97%),
+    /* the crowd: a scatter of shirts over rows of seats */
+    radial-gradient(circle, rgb(232 40 60 / 0.45) 1px, transparent 1.5px) 0 0 / 13px 9px,
+    radial-gradient(circle, rgb(31 139 255 / 0.4) 1px, transparent 1.5px) 5px 3px / 17px 9px,
+    radial-gradient(circle, rgb(255 201 40 / 0.5) 1px, transparent 1.5px) 9px 6px / 23px 9px,
+    repeating-linear-gradient(#cfd8ee 0 7px, #b9c5e2 7px 9px);
+}
+
+/* The pitch: mown stripes, field lines, and a glossy shine reflecting the lights */
+html:has([data-theme="arena"]) body::after {
+  inset: 46vh 0 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0) 22%),
+    radial-gradient(ellipse 14% 30% at 8% 0%, rgb(255 255 255 / 0.5), transparent 70%),
+    radial-gradient(ellipse 14% 30% at 92% 0%, rgb(255 255 255 / 0.5), transparent 70%),
+    radial-gradient(circle at 50% 55%, transparent 0 13vh, rgb(255 255 255 / 0.85) 13vh calc(13vh + 4px), transparent calc(13vh + 4px)),
+    linear-gradient(90deg, transparent calc(50% - 2px), rgb(255 255 255 / 0.85) calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)),
+    repeating-linear-gradient(90deg, #74c952 0 90px, #64b843 90px 180px);
+}
+
+/* ===========================================================================
+ * NOIR — rainy skyline, a searchlight in the clouds, manila case files
+ * ======================================================================== */
+html:has([data-theme="noir"]) {
+  --t-font-display: var(--font-bangers);
+  --t-ink: #16131a;
+  --t-paper: #f6eedb;
+  --t-white: #efe4c8;
+  --t-sun: #e9b44c;
+  --t-tomato: #c22d3a;
+  --t-bubble: #b8507a;
+  --t-grape: #5b4a86;
+  --t-sky: #6f8fae;
+  --t-lime: #8aa245;
+  --t-tangerine: #d0812f;
+  --t-text: #ebe4d2;
+  --t-edge: #050507;
+  --t-shadow: 7px 7px 0 0 #000;
+  --t-shadow-sm: 3px 3px 0 0 #000;
+  --t-shadow-hover: 10px 10px 0 0 #000;
+  --t-shadow-sm-hover: 5px 5px 0 0 #000;
+  --t-shadow-press: 0 0 0 0 #000;
+  --t-nav-bg: #07080c;
+  --t-nav-fg: #e9b44c;
+  --t-nav-edge: #000;
+  --t-nav-glow: 0 3px 0 #c22d3a;
+  --t-footer-bg: #050507;
+  --t-footer-fg: #9c947f;
+}
+
+html:has([data-theme="noir"]) body {
+  background:
+    radial-gradient(circle at 82% 14%, #f3ecd6 0 34px, rgb(243 236 214 / 0.18) 36px, transparent 140px) fixed,
+    linear-gradient(#090b12, #151b2b 60%, #1f2638) fixed;
+}
+
+/* Skyline with lit windows, under slanting rain */
+html:has([data-theme="noir"]) body::before {
+  inset: 0;
+  z-index: -1;
+  background:
+    repeating-linear-gradient(105deg, transparent 0 22px, rgb(180 200 230 / 0.07) 22px 23px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='260' viewBox='0 0 1200 260'%3E%3Cdefs%3E%3Cpattern id='w' width='16' height='20' patternUnits='userSpaceOnUse'%3E%3Crect x='5' y='6' width='5' height='7' fill='%23f2c14e' opacity='.5'/%3E%3C/pattern%3E%3C/defs%3E%3Cg fill='%2304060b'%3E%3Crect x='0' y='120' width='90' height='140'/%3E%3Crect x='90' y='60' width='70' height='200'/%3E%3Crect x='160' y='150' width='120' height='110'/%3E%3Crect x='280' y='30' width='60' height='230'/%3E%3Crect x='300' y='10' width='4' height='20'/%3E%3Crect x='340' y='100' width='100' height='160'/%3E%3Crect x='440' y='170' width='80' height='90'/%3E%3Crect x='520' y='80' width='90' height='180'/%3E%3Crect x='610' y='140' width='70' height='120'/%3E%3Crect x='680' y='40' width='80' height='220'/%3E%3Crect x='760' y='120' width='110' height='140'/%3E%3Crect x='870' y='90' width='60' height='170'/%3E%3Crect x='930' y='160' width='100' height='100'/%3E%3Crect x='1030' y='70' width='90' height='190'/%3E%3Crect x='1120' y='130' width='80' height='130'/%3E%3C/g%3E%3Cg fill='url(%23w)'%3E%3Crect x='96' y='70' width='58' height='180'/%3E%3Crect x='286' y='40' width='48' height='210'/%3E%3Crect x='528' y='92' width='74' height='160'/%3E%3Crect x='688' y='52' width='64' height='200'/%3E%3Crect x='1038' y='82' width='74' height='170'/%3E%3C/g%3E%3C/svg%3E")
+      bottom / 1200px 260px repeat-x;
+}
+
+/* The searchlight beam, slowly sweeping the clouds */
+html:has([data-theme="noir"]) body::after {
+  left: 35%;
+  bottom: -10vh;
+  width: 30vw;
+  height: 130vh;
+  z-index: -2;
+  background: linear-gradient(to top, rgb(255 238 190 / 0.16), rgb(255 238 190 / 0.05) 80%, transparent);
+  clip-path: polygon(45% 100%, 55% 100%, 100% 0, 0 0);
+  transform-origin: 50% 100%;
+  animation: searchlight 16s ease-in-out infinite alternate;
+}
+
+@keyframes searchlight {
+  from {
+    transform: rotate(-24deg);
+  }
+  to {
+    transform: rotate(18deg);
+  }
+}
+
+/* ===========================================================================
+ * LAB — stone walls, bubbling green glow, a crack of lightning
+ * ======================================================================== */
+html:has([data-theme="lab"]) {
+  --t-font-display: var(--font-creepster);
+  --t-ink: #0c1a12;
+  --t-paper: #f0f6e6;
+  --t-white: #e6efd8;
+  --t-sun: #d4ff3a;
+  --t-tomato: #ff5240;
+  --t-bubble: #ff6ad5;
+  --t-grape: #9a5cff;
+  --t-sky: #3de3cf;
+  --t-lime: #4dff6a;
+  --t-tangerine: #d6a041;
+  --t-text: #d9f5dc;
+  --t-edge: #0c1a12;
+  --t-shadow: 6px 6px 0 0 #020604, 0 0 26px rgb(77 255 106 / 0.28);
+  --t-shadow-sm: 3px 3px 0 0 #020604, 0 0 12px rgb(77 255 106 / 0.22);
+  --t-shadow-hover: 8px 8px 0 0 #020604, 0 0 36px rgb(77 255 106 / 0.5);
+  --t-shadow-sm-hover: 4px 4px 0 0 #020604, 0 0 18px rgb(77 255 106 / 0.45);
+  --t-shadow-press: 0 0 0 0 #020604, 0 0 10px rgb(77 255 106 / 0.3);
+  --t-nav-bg: linear-gradient(#18261d, #0b1510);
+  --t-nav-fg: #c8ffcf;
+  --t-nav-edge: #d6a041;
+  --t-nav-glow: 0 0 26px rgb(77 255 106 / 0.25);
+  --t-footer-bg: #060b08;
+  --t-footer-fg: #8fb597;
+}
+
+/* Stone blocks lit from below by the vats, with a violet spark up top */
+html:has([data-theme="lab"]) body {
+  background:
+    radial-gradient(ellipse 50% 45% at 10% 100%, rgb(77 255 106 / 0.28), transparent 70%) fixed,
+    radial-gradient(ellipse 40% 35% at 92% 0%, rgb(154 92 255 / 0.3), transparent 70%) fixed,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='64'%3E%3Crect width='96' height='64' fill='%23121f18'/%3E%3Crect x='2' y='2' width='92' height='28' fill='%23162820'/%3E%3Crect x='-46' y='34' width='92' height='28' fill='%23142319'/%3E%3Crect x='50' y='34' width='92' height='28' fill='%23172a1f'/%3E%3C/svg%3E")
+      fixed,
+    #0a120e;
+}
+
+/* Lightning: the whole room flashes now and then */
+html:has([data-theme="lab"]) body::after {
+  inset: 0;
+  z-index: 100;
+  background: radial-gradient(ellipse at 90% 0%, rgb(220 200 255 / 0.9), rgb(200 255 220 / 0.25) 60%);
+  opacity: 0;
+  animation: lightning 11s linear infinite;
+}
+
+@keyframes lightning {
+  0%,
+  90%,
+  100% {
+    opacity: 0;
+  }
+  91% {
+    opacity: 0.4;
+  }
+  92% {
+    opacity: 0.05;
+  }
+  93.5% {
+    opacity: 0.28;
+  }
+  95% {
+    opacity: 0;
+  }
+}
+
+/* The hub's neon sign: glowing tubes that flicker on when you walk in */
+.neon-sign {
+  text-shadow:
+    0 0 4px #fff,
+    0 0 12px #ff4fd8,
+    0 0 28px #ff4fd8,
+    0 0 56px #ff4fd8;
+  animation: neon-on 1.6s steps(1, end) both;
+}
+
+@keyframes neon-on {
+  0% {
+    opacity: 0.15;
+  }
+  12% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 1;
+  }
+  34% {
+    opacity: 0.35;
+  }
+  48%,
+  100% {
+    opacity: 1;
+  }
 }

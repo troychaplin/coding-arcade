@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function SecretIdentityPage() {
-  return <SecretIdentity />;
+  return (
+    <div data-theme="noir" className="contents">
+      <SecretIdentity />
+    </div>
+  );
 }

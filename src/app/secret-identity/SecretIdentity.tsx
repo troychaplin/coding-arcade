@@ -558,24 +558,35 @@ function Stamp({ text, color }: { text: string; color: string }) {
   );
 }
 
+/** The title card: a masked figure in the shadows, caught in a searchlight */
 function Header() {
   return (
     <header
-      className="chunky relative overflow-hidden rounded-3xl bg-sun px-6 py-8 text-center sm:py-10"
-      style={halftone("rgb(255 79 94 / 0.35)")}
+      className="chunky relative overflow-hidden rounded-3xl bg-[#0a0c14] px-6 py-10 text-center sm:py-12"
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse 55% 75% at 50% -10%, rgb(233 180 76 / 0.32), transparent 70%), radial-gradient(rgb(233 180 76 / 0.12) 1.2px, transparent 1.6px)",
+        backgroundSize: "auto, 9px 9px",
+      }}
     >
-      <p className="chunky-sm mb-3 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-bold">
-        <FolderOpen className="size-4 text-tomato" /> Mini-App #2 · Detective HQ
+      {/* The hero hiding in the dark */}
+      <VenetianMask
+        aria-hidden
+        className="pointer-events-none absolute -bottom-10 -left-8 size-56 -rotate-12 text-[#e9b44c]/10"
+        strokeWidth={1.25}
+      />
+      <p className="relative mb-4 inline-flex items-center gap-2 rounded-full border-2 border-[#e9b44c]/60 px-3 py-1 text-sm font-bold text-[#e9b44c]">
+        <FolderOpen className="size-4" /> Mini-App #2: Detective HQ
       </p>
-      <h1 className="font-display text-3xl leading-tight [text-shadow:3px_3px_0_white,6px_6px_0_var(--color-ink)] sm:text-5xl">
-        Secret Identity
-        <span className="block text-tomato">Detective</span>
+      <h1 className="relative font-display text-5xl leading-[0.95] tracking-wide sm:text-7xl">
+        <span className="block text-[#e9b44c] [text-shadow:4px_4px_0_#000]">Secret Identity</span>
+        <span className="block text-[#f6eedb] [text-shadow:4px_4px_0_#c22d3a,8px_8px_0_#000]">Detective</span>
       </h1>
-      <p className="mx-auto mt-3 max-w-lg font-semibold">
+      <p className="relative mx-auto mt-5 max-w-lg font-semibold text-[#d9d0bb]">
         A mystery hero is hiding in the files. Read the clues, crack the case, and
         unmask them before the trail goes cold!
       </p>
-      <span className="pointer-events-none absolute -right-6 top-6 hidden rotate-12 rounded-lg border-4 border-tomato px-3 py-1 font-display text-xl tracking-widest text-tomato sm:block">
+      <span className="pointer-events-none absolute -right-6 top-7 hidden rotate-12 rounded-lg border-4 border-tomato px-3 py-1 font-display text-2xl tracking-widest text-tomato sm:block">
         Top Secret
       </span>
     </header>
@@ -596,7 +607,7 @@ function Toolbar({
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-ink/60">
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider opacity-70">
           Pick your case files
         </p>
         <div role="radiogroup" aria-label="Hero category" className="flex flex-wrap gap-2">
@@ -790,7 +801,7 @@ function ClueCard({
     <div
       className={`chunky h-full overflow-hidden rounded-2xl bg-white ${
         fresh && n > 1 ? "animate-card-in" : ""
-      } ${unlocked ? "" : "opacity-80"}`}
+      } ${unlocked ? "" : "brightness-[0.82]"}`}
     >
       <div
         className={`flex items-center justify-between gap-2 border-b-[3px] border-ink px-4 py-2 ${
