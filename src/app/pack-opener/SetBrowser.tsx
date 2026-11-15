@@ -97,8 +97,8 @@ export default function SetBrowser({
       {open && (
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex flex-wrap items-center gap-3 border-b-[3px] border-ink bg-[linear-gradient(#2c4277,#0f1b3d)] px-4 py-3 text-white sm:px-5">
-            <h2 className="font-display text-xl text-sun">Browse sets</h2>
+          <div className="flex flex-wrap items-center gap-3 border-b-[3px] border-ink bg-[linear-gradient(160deg,#ef3b52,#c81d36_55%,#a3132a)] px-4 py-3 text-white sm:px-5">
+            <h2 className="font-display text-xl text-[#fff]">Browse sets</h2>
             <label className="relative order-last w-full sm:order-none sm:ml-auto sm:w-72">
               <span className="sr-only">Search sets</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink/50" />
@@ -126,7 +126,7 @@ export default function SetBrowser({
             {!results && (
               <nav
                 aria-label="Eras"
-                className="flex shrink-0 gap-1 overflow-x-auto border-b-[3px] border-ink bg-[#e6edfb] p-2 sm:w-52 sm:flex-col sm:overflow-y-auto sm:border-b-0 sm:border-r-[3px]"
+                className="flex shrink-0 gap-1 overflow-x-auto border-b-[3px] border-ink bg-[#141a28] p-2 sm:w-52 sm:flex-col sm:overflow-y-auto sm:border-b-0 sm:border-r-[3px]"
               >
                 {tabs.map((t) => {
                   const active = t.id === current?.id;
@@ -138,8 +138,8 @@ export default function SetBrowser({
                       onClick={() => setTab(t.id)}
                       className={`shrink-0 cursor-pointer whitespace-nowrap rounded-xl px-3 py-2 text-left text-sm font-bold sm:border-l-4 ${
                         active
-                          ? "bg-ink text-white sm:border-sun"
-                          : "text-ink/80 hover:bg-white sm:border-transparent"
+                          ? "bg-[#e9edf7] text-[#10131c] sm:border-sun"
+                          : "text-ink/80 hover:bg-[#fff]/10 sm:border-transparent"
                       }`}
                     >
                       {t.name}
@@ -222,8 +222,8 @@ function TileGrid({
                 chosen ? "ring-4 ring-sun ring-offset-2" : ""
               }`}
             >
-              <span className="grid h-12 w-full place-items-center">
-                <SetLogo set={s} className="h-12" />
+              <span className="grid h-14 w-full place-items-center rounded-xl bg-[#fff] p-1.5">
+                <SetLogo set={s} className="h-11" />
               </span>
               <span className="font-display text-sm leading-tight">{s.name}</span>
               {counts ? (

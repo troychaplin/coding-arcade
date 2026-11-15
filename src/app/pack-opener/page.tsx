@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PackOpenerPage() {
   return (
-    <div data-theme="arena" className="contents">
+    <div data-theme="dex" className="contents">
       <PokeCollector tab="packs" />
     </div>
   );

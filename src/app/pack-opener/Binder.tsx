@@ -247,7 +247,7 @@ export default function Binder({ collection }: { collection: Collection }) {
                   aria-checked={o.id === show}
                   onClick={() => setShow(o.id)}
                   className={`cursor-pointer px-3 py-1.5 text-sm font-bold ${i ? "border-l-[3px] border-ink" : ""} ${
-                    o.id === show ? "bg-ink text-white" : "bg-white hover:bg-sun"
+                    o.id === show ? "bg-[#e9edf7] text-[#10131c]" : "bg-white hover:bg-[#fff]/10"
                   }`}
                 >
                   {o.label}
@@ -345,7 +345,7 @@ export default function Binder({ collection }: { collection: Collection }) {
           aria-modal="true"
           aria-label={zoomCard.name}
           onClick={() => setZoomed(null)}
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/80 p-4"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4"
         >
           <div onClick={(e) => e.stopPropagation()} className="flex w-full max-w-xs animate-card-in flex-col items-center gap-3">
             <CardFace src={cardImage(zoomCard.image)} alt={zoomCard.name} shiny={zoomOwned.shiny} />

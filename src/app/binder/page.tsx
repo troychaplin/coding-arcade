@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function BinderPage() {
   return (
-    <div data-theme="arena" className="contents">
+    <div data-theme="dex" className="contents">
       <PokeCollector tab="binder" />
     </div>
   );

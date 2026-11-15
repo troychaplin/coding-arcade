@@ -39,7 +39,7 @@ export const projects: Project[] = [
       "Rip open booster packs, flip your cards, hunt for shiny holos and fill your Master Binder!",
     icon: PackageOpen,
     color: "bg-tomato",
-    neon: "#34e7ff",
+    neon: "#ff3d5a",
     href: "/pack-opener",
   },
 ];

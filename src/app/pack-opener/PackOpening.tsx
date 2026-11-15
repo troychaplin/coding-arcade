@@ -42,6 +42,10 @@ export default function PackOpening({
   const [error, setError] = useState<string | null>(null);
   const [pack, setPack] = useState<Pack | null>(null);
   const [flipped, setFlipped] = useState<boolean[]>([]);
+  /** Bumped to bring the pack back after it's been torn away */
+  const [packKey, setPackKey] = useState(0);
+  /** Which key started the current opening (for its spinner) */
+  const [opening, setOpening] = useState({ coins: false });
 
   const topRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -65,6 +69,7 @@ export default function PackOpening({
     if (phase !== "select") return;
     if (how === "free" ? !canFree : !canBuy) return;
     setError(null);
+    setOpening({ coins: how === "coins" });
     setPhase("loading");
     // Wiggle the pack while the cards load
     if (!prefersReducedMotion()) {
@@ -123,7 +128,10 @@ export default function PackOpening({
         { duration: 800, delay: 250, easing: "ease-in", fill: "forwards" },
       );
     }
-    timer.current = setTimeout(() => setPhase("reveal"), prefersReducedMotion() ? 50 : 1000);
+    timer.current = setTimeout(() => {
+      setPhase("reveal");
+      setPackKey((k) => k + 1); // the opened wrapper comes back, dimmed, while the cards are out
+    }, prefersReducedMotion() ? 50 : 1000);
   }
 
   function flip(i: number) {
@@ -134,78 +142,27 @@ export default function PackOpening({
     setPack(null);
     setFlipped([]);
     setPhase("select");
+    setPackKey((k) => k + 1); // bring the (torn-away) pack back
   }
 
-  /* ---------------- Reveal ---------------- */
-  if (phase === "reveal" && pack) {
-    const allFlipped = flipped.every(Boolean);
-    const newCount = pack.results.filter((r) => r.isNew).length;
-    const coinsEarned = pack.results.reduce((sum, r) => sum + r.coins, 0);
-    return (
-      <section className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-2xl">
-            {allFlipped ? "Your pulls! 🎉" : "Tap each card to flip it!"}
-          </h2>
-          {!allFlipped && (
-            <button
-              type="button"
-              onClick={() => setFlipped(pack.cards.map(() => true))}
-              className="chunky-sm pop-sm inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-2 font-bold"
-            >
-              <Wand2 className="size-4" /> Flip all
-            </button>
-          )}
-        </div>
-
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {pack.cards.map((card, i) => (
-            <RevealSlot
-              key={`${card.id}-${i}`}
-              index={i}
-              card={card}
-              result={pack.results[i]}
-              flipped={flipped[i]}
-              onFlip={() => flip(i)}
-            />
-          ))}
-        </ul>
-
-        {allFlipped && (
-          <div className="chunky flex animate-card-in flex-col items-center gap-4 rounded-3xl bg-lime p-6 text-center">
-            <p className="font-display text-xl">
-              {newCount > 0 ? `${newCount} new card${newCount === 1 ? "" : "s"} for your binder!` : "No new cards this time…"}
-              {coinsEarned > 0 && ` +${coinsEarned} Poké-Coins from duplicates! 🪙`}
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <button
-                type="button"
-                onClick={backToPacks}
-                className="chunky pop inline-flex cursor-pointer items-center gap-2 rounded-2xl bg-tomato px-6 py-3 font-display text-white"
-              >
-                <RotateCcw className="size-5" /> Open another pack
-              </button>
-              <Link
-                href="/binder"
-                className="chunky pop inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 font-display"
-              >
-                <BookOpen className="size-5" /> See my binder
-              </Link>
-            </div>
-          </div>
-        )}
-      </section>
-    );
+  /** Picking another set mid-reveal goes straight back to choosing (the cards are saved) */
+  function chooseSet(id: string) {
+    if (phase === "reveal") backToPacks();
+    setSetId(id);
   }
 
-  /* ---------------- Pack select ---------------- */
+  const revealing = phase === "reveal" && pack !== null;
+  const allFlipped = revealing && flipped.every(Boolean);
+  const newCount = pack?.results.filter((r) => r.isNew).length ?? 0;
+  const coinsEarned = pack?.results.reduce((sum, r) => sum + r.coins, 0) ?? 0;
+
   return (
     <section className="flex flex-col gap-6">
       <div>
         <h2 className="mb-3 font-display text-2xl">Choose a booster pack</h2>
         <SetPicker
           value={setId}
-          onChange={setSetId}
+          onChange={chooseSet}
           specials={[ENERGY_SET, LEGENDARY_SET]}
           disabled={busy}
           variant="pack"
@@ -213,20 +170,28 @@ export default function PackOpening({
         />
       </div>
 
-      <div className="grid items-center gap-8 md:grid-cols-[auto_1fr]">
-        {/* The big pack */}
-        <div className="relative mx-auto h-[25rem] w-60">
-          <div ref={bodyRef} className="absolute inset-0">
-            <PackArt set={chosen} topRef={topRef} />
+      <div className="grid items-center gap-6 sm:grid-cols-[auto_1fr]">
+        {/* The pack (drawn full size, shown at two-thirds) */}
+        <div className="relative mx-auto h-64 w-[9.6rem]">
+          <div
+            key={packKey}
+            className={`absolute left-0 top-0 h-[25rem] w-60 origin-top-left scale-[0.64] transition-opacity duration-500 ${
+              revealing ? "opacity-35 grayscale-[0.4]" : ""
+            }`}
+          >
+            <div ref={bodyRef} className="absolute inset-0">
+              <PackArt set={chosen} topRef={topRef} />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <p className="text-lg font-semibold">
+        {/* Keys and what's happening */}
+        <div className="flex flex-col gap-3">
+          <p className="font-semibold">
             {chosen.id === LEGENDARY_SET.id ? (
               <>
-                Every card is a <strong>legendary or mythical Pokémon</strong>, from any set — and
-                it goes into that set&apos;s page in your binder. 👑
+                Every card is a <strong>legendary or mythical Pokémon</strong>, from any set, and it
+                goes into that set&apos;s page in your binder. 👑
               </>
             ) : (
               <>
@@ -236,62 +201,96 @@ export default function PackOpening({
             )}
           </p>
 
-          {chosen.coinsOnly ? (
-            <p className="chunky-sm flex items-center gap-2 rounded-xl bg-white px-4 py-3 font-semibold">
-              <Crown className="size-5 shrink-0 text-grape" /> {chosen.name} packs can&apos;t be opened with free
-              packs — buy one with Poké-Coins!
-            </p>
-          ) : (
-            <>
+          <div className="flex flex-wrap items-center gap-3">
+            {!revealing ? (
+              <>
+                {!chosen.coinsOnly && (
+                  <button
+                    type="button"
+                    onClick={() => rip("free")}
+                    disabled={busy || !canFree}
+                    className="dex-key bg-[linear-gradient(#f2526a,#c81d36)] text-[#fff]"
+                  >
+                    {phase !== "select" && !opening.coins ? (
+                      <LoaderCircle className="size-5 animate-spin" />
+                    ) : (
+                      <PackageOpen className="size-5" strokeWidth={2.5} />
+                    )}
+                    Open pack
+                    <span className="rounded-full bg-black/25 px-2 py-0.5 text-xs tabular-nums">{available} free</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => rip("coins")}
+                  disabled={busy || !canBuy}
+                  className="dex-key bg-[linear-gradient(#ffd25a,#e9a400)] text-[#10131c]"
+                >
+                  {phase !== "select" && opening.coins ? (
+                    <LoaderCircle className="size-5 animate-spin" />
+                  ) : (
+                    <Coins className="size-5" strokeWidth={2.5} />
+                  )}
+                  Buy pack
+                  <span className="rounded-full bg-black/15 px-2 py-0.5 text-xs tabular-nums">{price} 🪙</span>
+                </button>
+              </>
+            ) : !allFlipped ? (
               <button
                 type="button"
-                onClick={() => rip("free")}
-                disabled={busy || !canFree}
-                className="chunky pop flex cursor-pointer items-center justify-center gap-3 rounded-2xl bg-tomato px-6 py-5 font-display text-2xl text-white disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => setFlipped(pack.cards.map(() => true))}
+                className="dex-key bg-[linear-gradient(#3e4860,#232a3b)] text-[#fff]"
               >
-                {phase === "loading" ? (
-                  <>
-                    <LoaderCircle className="size-7 animate-spin" /> Opening…
-                  </>
-                ) : (
-                  <>
-                    <PackageOpen className="size-7" strokeWidth={2.5} /> Rip Open Pack!
-                  </>
-                )}
+                <Wand2 className="size-5" /> Flip all
               </button>
-              <p className="-mt-2 flex items-center gap-2 text-sm font-semibold text-ink/70">
-                <Gift className="size-4" />
-                {available > 0
-                  ? `Uses 1 free pack (${available} left)`
-                  : `No free packs right now — ${PACKS_PER_REFILL} more are on their way!`}
-              </p>
-            </>
-          )}
-
-          <button
-            type="button"
-            onClick={() => rip("coins")}
-            disabled={busy || !canBuy}
-            className="chunky pop flex cursor-pointer items-center justify-center gap-3 rounded-2xl bg-sun px-6 py-4 font-display text-lg disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {phase === "loading" && chosen.coinsOnly ? (
+            ) : (
               <>
-                <LoaderCircle className="size-6 animate-spin" /> Opening…
+                <button
+                  type="button"
+                  onClick={backToPacks}
+                  autoFocus
+                  className="dex-key bg-[linear-gradient(#f2526a,#c81d36)] text-[#fff]"
+                >
+                  <RotateCcw className="size-5" /> Open another pack
+                </button>
+                <Link href="/binder" className="dex-key bg-[linear-gradient(#3e4860,#232a3b)] text-[#fff]">
+                  <BookOpen className="size-5" /> See my binder
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* One short line about what to do next */}
+          <p className="flex items-center gap-2 text-sm font-semibold text-ink/70" role="status">
+            {revealing ? (
+              allFlipped ? (
+                <span className="text-ink">
+                  🎉{" "}
+                  {newCount > 0
+                    ? `${newCount} new card${newCount === 1 ? "" : "s"} for your binder!`
+                    : "No new cards this time…"}
+                  {coinsEarned > 0 && ` +${coinsEarned} Poké-Coins from duplicates 🪙`}
+                </span>
+              ) : (
+                "Tap each card on the table to flip it."
+              )
+            ) : chosen.coinsOnly ? (
+              <>
+                <Crown className="size-4 shrink-0 text-grape" /> {chosen.name} packs can&apos;t use free
+                packs. Buy one with Poké-Coins
+                {!canBuy && ` (you have ${collection.coins})`}.
+              </>
+            ) : available > 0 ? (
+              <>
+                <Gift className="size-4 shrink-0" /> Opening uses a free pack. Buying uses {price} Poké-Coins
+                {!canBuy && ` (you have ${collection.coins})`}.
               </>
             ) : (
               <>
-                <Coins className="size-6" strokeWidth={2.5} /> Buy a Pack — {price} 🪙
+                <Gift className="size-4 shrink-0" /> No free packs right now, {PACKS_PER_REFILL} more are on
+                their way!
               </>
             )}
-          </button>
-          <p className="-mt-2 text-sm font-semibold text-ink/70">
-            {canBuy
-              ? chosen.coinsOnly
-                ? "You've saved up enough — rip one now!"
-                : "Skip the wait and rip one right now!"
-              : `Duplicates turn into Poké-Coins. Save up ${price} to buy ${
-                  chosen.coinsOnly ? `a ${chosen.name} pack` : "a pack"
-                }! (You have ${collection.coins}.)`}
           </p>
 
           {error && (
@@ -300,6 +299,42 @@ export default function PackOpening({
             </p>
           )}
         </div>
+      </div>
+
+      {/* The card table: five spaces the pack is dealt into */}
+      <div className="dex-table px-4 pb-5 pt-5 sm:px-6">
+        <ul className="flex flex-wrap justify-center gap-3 sm:grid sm:grid-cols-5 sm:gap-4">
+          {Array.from({ length: 5 }, (_, i) => {
+            const card = revealing && pack ? pack.cards[i] : undefined;
+            const result = revealing && pack ? pack.results[i] : undefined;
+            return card && result ? (
+              <RevealSlot
+                key={`${card.id}-${i}`}
+                index={i}
+                card={card}
+                result={result}
+                flipped={flipped[i]}
+                onFlip={() => flip(i)}
+                className="w-[30%] sm:w-auto"
+              />
+            ) : (
+              <li key={`empty-${i}`} className="w-[30%] sm:w-auto">
+                <div
+                  className={`grid aspect-[63/88] place-items-center rounded-xl border-2 border-dashed border-[#e9edf7]/20 bg-[#fff]/[0.03] ${
+                    busy ? "animate-pulse" : ""
+                  }`}
+                >
+                  <span className="font-display text-2xl text-[#e9edf7]/20">{i + 1}</span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        {!revealing && (
+          <p className="mt-4 text-center text-sm font-semibold text-ink/50">
+            {busy ? "Dealing your cards…" : "Your 5 cards land here."}
+          </p>
+        )}
       </div>
     </section>
   );
@@ -341,10 +376,10 @@ function PackArt({
               "linear-gradient(120deg, transparent 30%, rgb(255 255 255 / 0.7) 45%, transparent 60%), repeating-radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.18) 0 6px, transparent 6px 14px)",
           }}
         />
-        <span className="relative grid h-24 w-full place-items-center rounded-2xl border-[3px] border-ink bg-white p-3">
+        <span className="relative grid h-24 w-full place-items-center rounded-2xl border-[3px] border-[#10131c] bg-[#fff] p-3">
           <SetLogo set={set} alt={`${set.name} logo`} className="h-[4.5rem]" large />
         </span>
-        <div className="relative text-center text-white [text-shadow:2px_2px_0_var(--color-ink)]">
+        <div className="relative text-center text-white [text-shadow:2px_2px_0_#10131c]">
           <p className="font-display text-2xl leading-tight">{set.name}</p>
           <p className="font-display text-xs tracking-widest">BOOSTER PACK · {set.subtitle}</p>
         </div>
@@ -363,12 +398,14 @@ function RevealSlot({
   result,
   flipped,
   onFlip,
+  className = "",
 }: {
   index: number;
   card: CardDetail;
   result: PullResult;
   flipped: boolean;
   onFlip: () => void;
+  className?: string;
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const shiny = isShiny(card);
@@ -386,7 +423,7 @@ function RevealSlot({
   }, [index]);
 
   return (
-    <li ref={ref} className="flex flex-col items-center gap-2">
+    <li ref={ref} className={`flex flex-col items-center gap-2 ${className}`}>
       <div className={`w-full rounded-xl ${flipped && shiny ? "shadow-[0_0_24px_6px_rgb(255_210_63/0.8)]" : ""}`}>
         <FlipCard
           flipped={flipped}

@@ -105,7 +105,7 @@ export default function SetPicker({
           type="button"
           onClick={() => setBrowsing(true)}
           disabled={disabled}
-          className="flex w-36 shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-[3px] border-dashed border-ink/50 bg-white/70 p-2 text-center font-bold transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-36 shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-[3px] border-dashed border-ink/40 bg-[#fff]/5 p-2 text-center font-bold transition-colors hover:bg-[#fff]/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Search className="size-6" strokeWidth={2.5} />
           <span className="text-sm leading-tight">
@@ -159,7 +159,7 @@ function ShelfTile({
         <span className="grid h-14 place-items-center rounded-xl bg-white/90 p-1.5">
           <SetLogo set={s} className="h-11" />
         </span>
-        <span className="mt-1 block font-display text-sm leading-tight text-white [text-shadow:1px_1px_0_var(--color-ink)]">
+        <span className="mt-1 block font-display text-sm leading-tight text-white [text-shadow:1px_1px_0_rgb(16_19_28/0.7)]">
           {s.name}
         </span>
         {s.price && (
@@ -178,8 +178,8 @@ function ShelfTile({
       onClick={onPick}
       className={`chunky-sm pop-sm w-36 shrink-0 cursor-pointer rounded-2xl bg-white p-2 text-left ${ring}`}
     >
-      <span className="grid h-11 place-items-center">
-        <SetLogo set={s} className="h-11" />
+      <span className="grid h-12 place-items-center rounded-xl bg-[#fff] p-1">
+        <SetLogo set={s} className="h-10" />
       </span>
       <span className="mt-1 block font-display text-sm leading-tight">{s.name}</span>
       <span className="block text-xs font-semibold text-ink/60">{count ?? 0} collected</span>

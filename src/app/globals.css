@@ -223,7 +223,7 @@ body {
  * so the nav bar, footer and backdrop change with the page.
  *
  *   arcade  the hub: a neon arcade at night
- *   arena   Pokémon: a bright battle stadium with a glossy floor
+ *   dex     Pokémon: an original handheld "Card Dex", red shell and dark screen
  *   noir    Secret Identity: a rainy city at night, case files under a searchlight
  *   lab     ID Card Factory: a mad scientist's dungeon lab, lightning and green glow
  */
@@ -234,9 +234,13 @@ body {
  * wins, but specific enough to beat the reset's `a { color: inherit }`.)
  * ------------------------------------------------------------------------- */
 @layer base {
-  :where(html:has([data-theme="arcade"], [data-theme="noir"], [data-theme="lab"]))
+  :where(html:has([data-theme="arcade"], [data-theme="noir"], [data-theme="lab"], [data-theme="dex"]))
     [class*="bg-"]:not([class*="bg-ink"], [class*="bg-gradient"], [class*="bg-transparent"], [class*="bg-["]) {
     color: var(--t-ink);
+  }
+  /* Card Dex: light text fails on gold, so gold buttons and badges get dark text */
+  :where(html:has([data-theme="dex"])) [class~="bg-sun"] {
+    color: #10131c;
   }
 }
 
@@ -315,74 +319,142 @@ html:has([data-theme="arcade"]) body::after {
 }
 
 /* ===========================================================================
- * ARENA — daytime battle stadium: floodlights, stands, a glossy pitch
+ * DEX — the Pokémon game lives inside an original handheld "Card Dex":
+ * a red shell, a dark glass screen, on a calm plain backdrop
  * ======================================================================== */
-html:has([data-theme="arena"]) {
-  --t-font-display: var(--font-russo);
-  --t-ink: #0f1b3d;
-  --t-paper: #eef4ff;
+html:has([data-theme="dex"]) {
+  --t-font-display: var(--font-chakra);
+  /* The screen is dark, so ink (text, hairlines) is light. White stays white
+     (text on colour, logo plates); plain white panels become dark cards below */
+  --t-ink: #e9edf7;
+  --t-paper: #121725;
   --t-white: #ffffff;
-  --t-sun: #ffc928;
-  --t-tomato: #e8283c;
-  --t-bubble: #ff5fa2;
-  --t-grape: #5a43e0;
-  --t-sky: #1f8bff;
-  --t-lime: #34c759;
-  --t-tangerine: #ff8a1f;
-  --t-text: #0f1b3d;
-  --t-edge: #0f1b3d;
-  /* Polished plastic: a lip underneath, a soft drop shadow, a bright top edge */
-  --t-shadow:
-    inset 0 3px 0 rgb(255 255 255 / 0.65), inset 0 -4px 0 rgb(15 27 61 / 0.14),
-    0 6px 0 #0f1b3d, 0 16px 24px -10px rgb(15 27 61 / 0.55);
-  --t-shadow-sm:
-    inset 0 2px 0 rgb(255 255 255 / 0.6), inset 0 -3px 0 rgb(15 27 61 / 0.14), 0 3px 0 #0f1b3d;
-  --t-shadow-hover:
-    inset 0 3px 0 rgb(255 255 255 / 0.65), inset 0 -4px 0 rgb(15 27 61 / 0.14),
-    0 9px 0 #0f1b3d, 0 22px 28px -10px rgb(15 27 61 / 0.6);
-  --t-shadow-sm-hover:
-    inset 0 2px 0 rgb(255 255 255 / 0.6), inset 0 -3px 0 rgb(15 27 61 / 0.14), 0 5px 0 #0f1b3d;
-  --t-shadow-press: inset 0 3px 6px rgb(15 27 61 / 0.3), 0 0 0 #0f1b3d;
-  --t-nav-bg: linear-gradient(#24386a, #0f1b3d);
-  --t-nav-fg: #ffffff;
-  --t-nav-edge: #ffc928;
-  --t-nav-glow: 0 6px 18px rgb(15 27 61 / 0.35);
-  --t-footer-bg: #0f1b3d;
-  --t-footer-fg: #c9d6f5;
+  --t-sun: #f5b301;
+  --t-tomato: #e5394f;
+  --t-bubble: #d9468f;
+  --t-grape: #7b5cff;
+  --t-sky: #2f8cff;
+  --t-lime: #1f9d55;
+  --t-tangerine: #ef7d1c;
+  --t-text: #e9edf7;
+  /* Calm surfaces: a hairline rim and soft depth instead of hard ink shadows */
+  --t-edge: rgb(255 255 255 / 0.1);
+  --t-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 8px 22px -8px rgb(0 0 0 / 0.6);
+  --t-shadow-sm: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 4px 12px -4px rgb(0 0 0 / 0.55);
+  --t-shadow-hover: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 14px 28px -8px rgb(0 0 0 / 0.7);
+  --t-shadow-sm-hover: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 8px 18px -6px rgb(0 0 0 / 0.65);
+  --t-shadow-press: inset 0 2px 6px rgb(0 0 0 / 0.45);
+  --t-nav-bg: #ffffff;
+  --t-nav-fg: #10131c;
+  --t-nav-edge: #e5394f;
+  --t-nav-glow: 0 4px 16px rgb(16 19 28 / 0.08);
+  --t-footer-bg: #1c2232;
+  --t-footer-fg: #aab3c8;
 }
 
-html:has([data-theme="arena"]) body {
-  background: #6cc24a;
+/* Plain white panels become dark raised cards on the screen */
+html:has([data-theme="dex"]) [class~="bg-white"] {
+  background-color: #1c2232;
 }
 
-/* Sky, floodlights and the stands (top of the screen) */
-html:has([data-theme="arena"]) body::before {
-  inset: 0 0 auto;
-  height: 46vh;
-  z-index: -1;
+/* Ink outlines become quiet hairlines on the dark screen */
+html:has([data-theme="dex"]) [class~="border-ink"] {
+  border-color: rgb(233 237 247 / 0.2);
+}
+
+html:has([data-theme="dex"]) body {
+  background-color: #e7eaf1;
+  background-image: radial-gradient(rgb(16 19 28 / 0.08) 1.2px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
+/* Gentle lift instead of a hard press-in for clickable things */
+html:has([data-theme="dex"]) .pop:hover:not(:disabled),
+html:has([data-theme="dex"]) .pop-sm:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+/* The device: a glossy red shell */
+@utility dex-shell {
+  border-radius: 2.25rem;
   background:
-    radial-gradient(circle at 8% 10%, rgb(255 255 255 / 0.95) 0 1.4%, rgb(255 250 220 / 0.55) 5%, transparent 22%),
-    radial-gradient(circle at 92% 10%, rgb(255 255 255 / 0.95) 0 1.4%, rgb(255 250 220 / 0.55) 5%, transparent 22%),
-    linear-gradient(#5db8ff 0%, #b8e3ff 60%, transparent 60%),
-    linear-gradient(transparent 94%, #0f1b3d 94% 97%, #ffc928 97%),
-    /* the crowd: a scatter of shirts over rows of seats */
-    radial-gradient(circle, rgb(232 40 60 / 0.45) 1px, transparent 1.5px) 0 0 / 13px 9px,
-    radial-gradient(circle, rgb(31 139 255 / 0.4) 1px, transparent 1.5px) 5px 3px / 17px 9px,
-    radial-gradient(circle, rgb(255 201 40 / 0.5) 1px, transparent 1.5px) 9px 6px / 23px 9px,
-    repeating-linear-gradient(#cfd8ee 0 7px, #b9c5e2 7px 9px);
+    linear-gradient(rgb(255 255 255 / 0.22), rgb(255 255 255 / 0) 42%),
+    linear-gradient(160deg, #ef3b52, #c81d36 55%, #a3132a);
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 0.35),
+    inset 0 -3px 0 rgb(0 0 0 / 0.25),
+    0 24px 50px -18px rgb(120 10 30 / 0.55),
+    0 6px 14px -6px rgb(0 0 0 / 0.3);
 }
 
-/* The pitch: mown stripes, field lines, and a glossy shine reflecting the lights */
-html:has([data-theme="arena"]) body::after {
-  inset: 46vh 0 0;
-  z-index: -1;
+/* Its dark glass screen */
+@utility dex-screen {
+  border-radius: 1.6rem;
+  color: #e9edf7;
   background:
-    linear-gradient(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0) 22%),
-    radial-gradient(ellipse 14% 30% at 8% 0%, rgb(255 255 255 / 0.5), transparent 70%),
-    radial-gradient(ellipse 14% 30% at 92% 0%, rgb(255 255 255 / 0.5), transparent 70%),
-    radial-gradient(circle at 50% 55%, transparent 0 13vh, rgb(255 255 255 / 0.85) 13vh calc(13vh + 4px), transparent calc(13vh + 4px)),
-    linear-gradient(90deg, transparent calc(50% - 2px), rgb(255 255 255 / 0.85) calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)),
-    repeating-linear-gradient(90deg, #74c952 0 90px, #64b843 90px 180px);
+    linear-gradient(135deg, rgb(255 255 255 / 0.06), transparent 28%),
+    #0f1420;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 6px 18px rgb(0 0 0 / 0.55),
+    0 1px 0 rgb(255 255 255 / 0.25);
+}
+
+/* A hardware key on the Card Dex: a glossy pill that presses in */
+@utility dex-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.6rem 1.15rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 -2px 0 rgb(0 0 0 / 0.25),
+    0 3px 0 rgb(0 0 0 / 0.5),
+    0 8px 16px -8px rgb(0 0 0 / 0.7);
+  transition:
+    transform 90ms ease,
+    box-shadow 90ms ease,
+    filter 120ms ease;
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      inset 0 -1px 0 rgb(0 0 0 / 0.2),
+      0 1px 0 rgb(0 0 0 / 0.5);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+/* The card table: a recessed tray with five spaces the cards are dealt into */
+@utility dex-table {
+  border-radius: 1.4rem;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 0%, rgb(47 140 255 / 0.12), transparent 65%),
+    #121826;
+  box-shadow:
+    inset 0 2px 12px rgb(0 0 0 / 0.6),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+/* Recessed dark chips on the shell (stats, the tab track) */
+@utility dex-inset {
+  border-radius: 0.9rem;
+  color: #e9edf7;
+  background: rgb(15 20 32 / 0.82);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.5),
+    0 1px 0 rgb(255 255 255 / 0.25);
 }
 
 /* ===========================================================================

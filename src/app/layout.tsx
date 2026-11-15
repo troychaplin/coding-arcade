@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bangers, Bungee, Creepster, Fredoka, Monoton, Russo_One } from "next/font/google";
+import { Bangers, Bungee, Chakra_Petch, Creepster, Fredoka, Monoton } from "next/font/google";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
 
@@ -16,7 +16,7 @@ const fredoka = Fredoka({
 
 // Each game's theme font (see themes.css). Not preloaded: a page only
 // downloads the one its theme uses.
-const russo = Russo_One({ variable: "--font-russo", weight: "400", subsets: ["latin"], preload: false });
+const chakra = Chakra_Petch({ variable: "--font-chakra", weight: ["600", "700"], subsets: ["latin"], preload: false });
 const bangers = Bangers({ variable: "--font-bangers", weight: "400", subsets: ["latin"], preload: false });
 const monoton = Monoton({ variable: "--font-monoton", weight: "400", subsets: ["latin"], preload: false });
 const creepster = Creepster({ variable: "--font-creepster", weight: "400", subsets: ["latin"], preload: false });
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bungee.variable} ${fredoka.variable} ${russo.variable} ${bangers.variable} ${creepster.variable} ${monoton.variable} h-full antialiased`}
+      className={`${bungee.variable} ${fredoka.variable} ${chakra.variable} ${bangers.variable} ${creepster.variable} ${monoton.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <NavBar />
